@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+
+# dotenv environment files
+.env
+
+# Logs
+npm-debug.log*
+
+# Mac system files
+.DS_Store
+
+# IDE settings
+.vscode/
+
+# Build files
+dist/
+build/
+
+# Frontend dependencies
+frontend/node_modules/
