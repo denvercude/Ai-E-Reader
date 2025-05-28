@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 })
 
 // User API route
-app.use('/api/users', userRoutes);
+app.use('/users', userRoutes);
 
 // Start server and connect to database
 app.listen(5000, () => {
