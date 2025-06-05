@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
+    "seed": "node backend/seed.js",
+    "teardown": "node backend/teardown.js",
+    "dev": "npm run seed && nodemon backend/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "type": "module",
