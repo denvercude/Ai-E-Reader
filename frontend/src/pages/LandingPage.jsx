@@ -1,8 +1,23 @@
+import "../styles/LandingPage.css"
+import logo from "../assets/LandingPageLogo.png";
+
+
 function LandingPage(){
     return (
-        <div>
-            <h1>Side Page</h1>
-            <p>Your intelligent reading companion.</p>
+        <div class="container">
+            <div class="left-container">
+                <h1>SidePage</h1>
+                <p>Your intelligent reading companion.</p>
+            </div>
+            <div class="right-container">
+                <div class="nav-bar">
+                    <a href="#">Home</a>
+                    <a href="#">About</a>
+                    <a href="#">Sign Up</a>
+                    <a href="#">Log In</a>
+                </div>
+                <img src={logo} alt="Logo" />
+            </div>
         </div>
     );
 }
