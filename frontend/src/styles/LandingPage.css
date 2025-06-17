@@ -33,7 +33,11 @@ p{
     flex-direction: column;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-end;
+}
+
+.left-container h1{
+    padding-right: 100px;
 }
 
 .right-container {
@@ -43,6 +47,7 @@ p{
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    margin-right: 80px;
 }
 
 .nav-bar {
