@@ -1,4 +1,5 @@
 import "../styles/LandingPage.css"
+import { Link } from 'react-router-dom'
 import logo from "../assets/LandingPageLogo.png";
 
 
@@ -14,7 +15,7 @@ function LandingPage(){
                     <a href="#">Home</a>
                     <a href="#">About</a>
                     <a href="#">Sign Up</a>
-                    <a href="#">Log In</a>
+                    <Link to="/library">Log In</Link>
                 </div>
                 <img src={logo} alt="Logo" />
             </div>
