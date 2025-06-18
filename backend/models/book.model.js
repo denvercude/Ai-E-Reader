@@ -26,7 +26,6 @@ const bookSchema = new mongoose.Schema({
         trim: true,
         minlength: 10,
         maxlength: 13,
-        unique: true
     },
     genre: {
         type: String,
