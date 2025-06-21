@@ -2,7 +2,7 @@ import express from 'express'
 import dotenv from "dotenv"
 import { connectDB } from './config/db.js';
 import userRoutes from './routes/user.routes.js'
-
+import bookRoutes from './routes/book.routes.js' 
 
 dotenv.config()
 
@@ -17,6 +17,9 @@ app.get('/', (req, res) => {
 
 // User API route
 app.use('/users', userRoutes);
+
+// Book API route
+app.use('/books', bookRoutes);
 
 // Start server and connect to database
 app.listen(5000, () => {
