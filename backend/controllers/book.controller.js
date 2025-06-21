@@ -33,10 +33,30 @@ export const uploadBook = async (req, res) => {
 
         // If we make it this far we successfully uploaded so we return a 200 success code
         // and the relevant data.
+
+        // Create a new book with the book metadeta and S3 lcoation in MongoDB
+        const {
+            title,
+            author,
+            publicationDate,
+            ISBN,
+            genre,
+            description,
+        } = req.body;
+
+        const newBook = await Book.create({
+            title,
+            author,
+            publicationDate,
+            ISBN,
+            genre,
+            description,
+            fileUrl: result.Location
+        });
+
         res.status(200).json({
-            message: 'File successfully uploaded',
-            url: result.Location,
-            key: result.Key
+            message: 'Book uploaded and saved successfully',
+            book: newBook
         });
     }catch (err) {
         console.error(err);
