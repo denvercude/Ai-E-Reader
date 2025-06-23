@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import "../styles/UploadBookForm.css";
+import axios from 'axios';
 
 function UploadBookForm() {
     const [formData, setFormData] = useState({
@@ -23,6 +24,26 @@ function UploadBookForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const data = new FormData();
+        data.append('title', formData.title);
+        data.append('author', formData.genre);
+        data.append('publicationDate', formData.publicationDate);
+        data.append('ISBN', formData.ISBN);
+        data.append('description', formData.description);
+        data.append('pdf', formData.pdf);
+
+        try {
+            const response = await axios.post('http://localhost:5000/books/upload', data, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+            });
+
+            console.log('Upload success:', response.data);
+        } catch (error) {
+            console.error('Upload error:', error.response?.data || error.message);
+        }
     };
 
     return (

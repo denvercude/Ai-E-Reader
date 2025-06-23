@@ -59,7 +59,7 @@ export const uploadBook = async (req, res) => {
             book: newBook
         });
     }catch (err) {
-        console.error(err);
+        console.error('Upload error:', err.message, err.stack);
         res.status(500).json({error: 'Failed to upload file' });
     };
 };

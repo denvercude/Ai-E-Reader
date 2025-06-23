@@ -1,5 +1,6 @@
 import express from 'express'
 import dotenv from "dotenv"
+import cors from 'cors';
 import { connectDB } from './config/db.js';
 import userRoutes from './routes/user.routes.js'
 import bookRoutes from './routes/book.routes.js' 
@@ -9,6 +10,7 @@ dotenv.config()
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 // Base route
 app.get('/', (req, res) => {
