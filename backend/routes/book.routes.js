@@ -1,27 +1,32 @@
-import express from 'express'
-const router = express.Router()
+import express from 'express';
+import upload from '../middlewares/upload.js';
 
 import {
-    getAllBooks,
-    getBookById,
-    updateBook,
-    deleteBook
-} from '../controllers/book.controller.js'
+  uploadBook
+  // getAllBooks,
+  // getBookById,
+  // updateBook,
+  // deleteBook
+} from '../controllers/book.controller.js';
+
+const router = express.Router();
+
+// Upload a book's PDF to S3 storage
+router.post('/upload', upload.single('pdf'), uploadBook);
 
 // Get all books
-router.get('/', getAllBooks) // Route to get all books
+// router.get('/', getAllBooks);
 
 // Get a book by ID
-router.get('/:id', getBookById) // Route to get a book by its ID
+// router.get('/:id', getBookById);
 
 // Update a book by ID
-router.put('/:id', updateBook) // Route to update a book by its ID
+// router.put('/:id', updateBook);
 
 // Delete a book by ID
-router.delete('/:id', deleteBook) // Route to delete a book by its ID
+// router.delete('/:id', deleteBook);
 
-// Export the router
-export default router // Export the book routes for use in the main app
+export default router;
 
 
 /* This file defines the routes for book-related operations in the application.

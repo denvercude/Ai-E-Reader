@@ -41,10 +41,9 @@ const bookSchema = new mongoose.Schema({
         minlength: 1,
         maxlength: 1000
     },
-    fileSize: {
-        type: Number, // size in bytes
-        required: false, 
-        min: 0 // file size cannot be negative
+    fileUrl: {
+        type: String,
+        required: true
     }
 }, {
     timestamps: true // automatically adds createdAt and updatedAt fields
