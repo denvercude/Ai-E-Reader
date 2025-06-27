@@ -34,7 +34,7 @@ function UploadBookForm() {
         data.append('pdf', formData.pdf);
 
         try {
-            const response = await axios.post('http://localhost:5000/books/upload', data, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/books/upload`, data, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
