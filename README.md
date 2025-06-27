@@ -8,7 +8,7 @@ This project was inspired by the *No Fear Shakespeare* reading companion series 
 
 ## Live Demo
 
-[https://ai-e-reader.vercel.app/]
+https://ai-e-reader.vercel.app/
 
 ## Current Features
 
