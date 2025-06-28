@@ -44,7 +44,7 @@ userSchema.pre('save', async function (next) {
 // take the submitted password and use this to encrypt it and see if it matches the
 // user's encrypted password in the database.
 userSchema.methods.matchPassword = async function (enterPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return await bcrypt.compare(enterPassword, this.password);
 };
 
 export const User = mongoose.model('User', userSchema);
