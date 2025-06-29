@@ -12,19 +12,19 @@ import {
 const router = express.Router();
 
 // Upload a book's PDF to S3 storage
-router.post('/upload', upload.single('pdf'), uploadBook);
+//router.post('/upload', upload.single('pdf'), uploadBook);
 
 // Get all books
- router.get('/', getAllBooks);
+//router.get('/', getAllBooks);
 
 // Get a book by ID
- router.get('/:id', getBookById);
+//router.get('/:id', getBookById);
 
 // Update a book by ID
- router.put('/:id', updateBook);
+//router.put('/:id', updateBook);
 
 // Delete a book by ID
- router.delete('/:id', deleteBook);
+//router.delete('/:id', deleteBook);
 
 export default router;
 

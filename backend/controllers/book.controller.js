@@ -5,6 +5,7 @@ import Book from '../models/book.model.js';
 import { v4 as uuidv4 } from 'uuid';
 // The import below uses Node's built-in path module to work with file paths.
 import path from 'path';
+import mongoose from 'mongoose';
 
 export const uploadBook = async (req, res) => {
     try {
@@ -63,3 +64,27 @@ export const uploadBook = async (req, res) => {
         res.status(500).json({error: 'Failed to upload file' });
     };
 };
+
+export const getAllBooks = async (req, res) => {
+    try {
+        const books = await Book.find();
+        return res.status(200).json({ success: true, data: books })
+    } catch (error){
+        return res.status(500).json({ success: false, message: error.message }); 
+    }
+};
+
+export const getBookById = async (req, res) => {
+    // gets the book id from request parameters in the url
+    const { id } = req.params();
+
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(401).json({ success: false, message: "Invalid book id"});
+    }
+
+    try {
+        console.log("Left off here");
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
