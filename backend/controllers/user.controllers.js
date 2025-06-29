@@ -1,5 +1,46 @@
 import mongoose from "mongoose";
+import generateToken from '../utils/generateToken.js';
 import { User } from '../models/user.model.js';
+
+// Login a user
+export const loginUser = async (req, res) => {
+    // this extracts the email and password from the request sent by client
+    const { email, password } = req.body;
+    try {
+        // this uses a mongoose method to find the user document associated with the req email
+        // if it doesn't find one, the user const will be null
+        const user = await User.findOne({ email });
+
+        // this is where we check if the user const is null and send back appropriate error codes
+        if(!user) { 
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        }
+
+        // now we check if the password matches the stored (hashed) password
+        // this calls a helper method matchPassword that we created in user.model.js
+        const isMatch = await user.matchPassword(password);
+        if(!isMatch) {
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        }
+
+        // if the method makes it this far, we generate and send back a JWT token
+        // this ensures the user can stay logged in throughout their browsing session
+        const token = generateToken(user._id);
+
+        // successful response with the requested data
+        return res.status(200).json({ 
+            success: true,
+            token,
+            user: {
+                _id: user._id,
+                email: user.email,
+                username: user.username
+            }
+        })
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
 
 // GET all users
 export const getUsers = async (req, res) => {
