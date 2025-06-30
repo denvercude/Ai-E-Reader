@@ -3,12 +3,12 @@ import upload from '../middlewares/upload.js';
 import { protect } from '../middlewares/authentication.js';
 
 import {
-  uploadBook
-  // getAllBooks,
-  // getBookById,
-  // updateBook,
-  // deleteBook
-} from '../controllers/book.controller.js';
+  uploadBook,
+  getAllBooks,
+  getBookById,
+  updateBook,
+  deleteBook
+} from '../controllers/book.controllers.js';
 
 const router = express.Router();
 
