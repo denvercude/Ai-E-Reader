@@ -52,7 +52,8 @@ export const uploadBook = async (req, res) => {
             ISBN,
             genre,
             description,
-            fileUrl: result.Location
+            fileUrl: result.Location,
+            user: req.user._id
         });
 
         res.status(200).json({
@@ -67,7 +68,7 @@ export const uploadBook = async (req, res) => {
 
 export const getAllBooks = async (req, res) => {
     try {
-        const books = await Book.find();
+        const books = await Book.find({ user: req.user._id });
         return res.status(200).json({ success: true, data: books })
     } catch (error){
         return res.status(500).json({ success: false, message: error.message }); 
@@ -76,14 +77,30 @@ export const getAllBooks = async (req, res) => {
 
 export const getBookById = async (req, res) => {
     // gets the book id from request parameters in the url
-    const { id } = req.params();
+    const { id } = req.params;
 
+    // makes sure the book id is a valid mongoose id object
     if(!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(401).json({ success: false, message: "Invalid book id"});
     }
 
     try {
-        console.log("Left off here");
+        // attempts to find the book 
+        const book = await Book.findById(id);
+
+        // return a 404 if the book isn't in the database
+        if(!book) {
+            return res.status(404).json({ success: false, message: "Book not found."});
+        }
+
+        // if the user id from the jwt token does not match the user id reference
+        // in the book, then access is denied
+        if(!book.user.equals(req.user._id)) {
+            return res.status(403).json({ success: false, message: "Access denied: User doesn't own this book"});
+        }
+
+        // send the book if everything is good
+        return res.status(200).json({ success: true, data: book});
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
