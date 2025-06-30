@@ -44,6 +44,11 @@ const bookSchema = new mongoose.Schema({
     fileUrl: {
         type: String,
         required: true
+    },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     }
 }, {
     timestamps: true // automatically adds createdAt and updatedAt fields
