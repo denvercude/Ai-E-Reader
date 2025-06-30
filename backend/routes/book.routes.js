@@ -1,5 +1,6 @@
 import express from 'express';
 import upload from '../middlewares/upload.js';
+import { protect } from '../middlewares/authentication.js';
 
 import {
   uploadBook
@@ -12,19 +13,19 @@ import {
 const router = express.Router();
 
 // Upload a book's PDF to S3 storage
-//router.post('/upload', upload.single('pdf'), uploadBook);
+router.post('/upload', protect, upload.single('pdf'), uploadBook);
 
 // Get all books
-//router.get('/', getAllBooks);
+router.get('/', protect, getAllBooks);
 
 // Get a book by ID
-//router.get('/:id', getBookById);
+router.get('/:id', protect, getBookById);
 
 // Update a book by ID
-//router.put('/:id', updateBook);
+router.put('/:id', protect, updateBook);
 
 // Delete a book by ID
-//router.delete('/:id', deleteBook);
+router.delete('/:id', protect, deleteBook);
 
 export default router;
 
