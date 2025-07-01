@@ -126,7 +126,7 @@ export const updateBook = async (req, res) => {
 
         // check if th user owns the book
         if(!book.user.equals(req.user._id)) {
-            return res.status(403).json({ success: false, message: "Access denied: User does not ownt his book" });
+            return res.status(403).json({ success: false, message: "Access denied: User does not own this book" });
         }
 
         // create an array of whitelisted fields
@@ -145,6 +145,37 @@ export const updateBook = async (req, res) => {
         const updatedBook = await book.save();
 
         return res.status(200).json({ success: true, data: updateBook });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const deleteBook = async (req, res) => {
+    // get the book id
+    const { id } = req.params;
+
+    //validate the book id
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: "Invalid book id"})
+    }
+
+    try {
+        // find the book in the databse
+        const book = await Book.findById(id);
+
+        if(!book) {
+            return res.status(404).json({ success: false, message: "Book not found"});
+        }
+
+        // make sure the user owns this book
+        if (!book.user.equals(req.user._id)) {
+            return res.status(403).json({ success: false, message: "Access denied: User does not own this book."})
+        }
+
+        // delete the book from the database
+        await book.deleteOne();
+
+        return res.status(200).json({ success: true, message: "Book deleted successfully" });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
