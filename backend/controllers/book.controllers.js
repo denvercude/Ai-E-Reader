@@ -105,3 +105,47 @@ export const getBookById = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 }
+
+export const updateBook = async (req, res) => {
+    // get the book id
+    const { id } = req.params;
+
+    // validate the id
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: "Invalid book id" })
+    }
+
+    try {
+        // find the book in the database
+        const book = await Book.findById(id);
+
+        // if you couldn't find it, send error code/message
+        if(!book) {
+            return res.status(404).json({ success: false, message: "Book not found" });
+        }
+
+        // check if th user owns the book
+        if(!book.user.equals(req.user._id)) {
+            return res.status(403).json({ success: false, message: "Access denied: User does not ownt his book" });
+        }
+
+        // create an array of whitelisted fields
+        const allowedUpdates = ['title', 'author', 'publicationDate', 'ISBN', 'genre', 'description'];
+
+        // so this essentially goes through every field in the allowedUpdates array and says..
+        // if the user has provided a new value for this field (!== undefined), then update
+        // that field in the selected book with the value they've provided
+        allowedUpdates.forEach(field => {
+            if(req.body[field] !== undefined){
+                book[field] = req.body[field];
+            }
+        });
+
+        // save the updated book to the databse
+        const updatedBook = await book.save();
+
+        return res.status(200).json({ success: true, data: updateBook });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
