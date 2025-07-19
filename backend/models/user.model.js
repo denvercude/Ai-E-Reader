@@ -39,12 +39,11 @@ userSchema.pre('save', async function (next) {
 });
 
 
-// This is a method to matchPassowrds when user log in. It's not being used anywhere yet
-// because the login feature hasn't been added. But once we add logging ing, we'll
-// take the submitted password and use this to encrypt it and see if it matches the
-// user's encrypted password in the database.
+// This is a method to check if the submitted password's encrypted version
+// matches the encrypted password for that user in our database. It is
+// called in the loginUser method in our user.controller.js file
 userSchema.methods.matchPassword = async function (enterPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return await bcrypt.compare(enterPassword, this.password);
 };
 
 export const User = mongoose.model('User', userSchema);
