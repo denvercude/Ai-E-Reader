@@ -12,9 +12,9 @@ async function testPDFExtraction() {
 
     //log key information
     console.log('✅ PDF Text Extraction Successful')
-    console.log('Total Pages: ${data.numpages}')
-    console.log('Text Length: ${data.text.length}')
-    console.log('First 500 Characters: \n${data.text.substring(0, 500)}')
+    console.log(`Total Pages: ${data.numpages}`)
+    console.log(`Text Length: ${data.text.length}`)
+    console.log(`First 500 Characters: \n${data.text.substring(0, 500)}`)
   } catch (error) {
     console.error('❌ PDF Extraction Failed:', error.message);
   
