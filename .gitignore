@@ -19,3 +19,6 @@ build/
 
 # Frontend dependencies
 frontend/node_modules/
+
+# Tesseract language data
+eng.traineddata
