@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from './pages/LandingPage.jsx'
 import LibraryView from './pages/LibraryView.jsx'
+import LoginSignUpPage from './pages/LoginSignUpPage.jsx'
 import './styles/App.css'
 
 function App() {
@@ -9,6 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/library" element={<LibraryView />} />
+        <Route path="/login-signup" element={<LoginSignUpPage />} />
       </Routes>
     </BrowserRouter>
   );
