@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { fromPath } from 'pdf2pic';
 import Tesseract from 'tesseract.js';
 
@@ -36,15 +36,16 @@ export async function extractTextFromPdf(buffer) {
     }
 
     try {
-        const pdfDoc = await PDFDocument.load(buffer);
-        const numPages = pdfDoc.getPageCount();
-
+        const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+        const pdf = await loadingTask.promise;
+        const numPages = pdf.numPages;
         const pages = [];
-        for (let i = 0; i < numPages; i++) {
-            const page = pdfDoc.getPage(i);
-            const textContent = page.getTextContent ? await page.getTextContent() : '';
-            const text = textContent.items?.map(item => item.str).join(' ') || '';
-            pages.push({ page: i + 1, text: text.trim() });
+
+        for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            pages.push({ page: i, text: pageText.trim() });
         }
 
         const combinedText = pages.map(p => p.text).join(' ').trim();
