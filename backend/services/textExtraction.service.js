@@ -7,8 +7,9 @@ import Tesseract from 'tesseract.js';
 
 // utility function to save a PDF buffer to a temporary file
 const writeTempFile = (buffer, filename) => {
+    const sanitizedFilename = path.basename(filename);
     const tmpDir = os.tmpdir();
-    const filePath = path.join(tmpDir, filename);
+    const filePath = path.join(tmpDir, sanitizedFilename);
     fs.writeFileSync(filePath, buffer);
     return filePath;
 };
