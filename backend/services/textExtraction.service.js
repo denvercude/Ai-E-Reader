@@ -66,48 +66,54 @@ export async function extractTextFromPdf(buffer) {
         result.requiresOCR = true;
         result.method = 'OCR';
         const tempFile = writeTempFile(buffer, `ocr-temp-${Date.now()}.pdf`);
+        const tempImages = [];
+        try {
+            const convert = fromPath(tempFile, {
+                density: 150,
+                saveFilename: 'ocr-image',
+                savePath: os.tmpdir(),
+                format: 'png'
+            });
+            const pages = await convert.bulk(-1);
+            tempImages.push(...pages);
+            result.totalPages = pages.length;
 
-        const convert = fromPath(tempFile, {
-            density: 150,
-            saveFilename: 'ocr-image',
-            savePath: os.tmpdir(),
-            format: 'png'
-        });
-
-        const pages = await convert.bulk(-1);
-        result.totalPages = pages.length;
-
-        // Check that Tesseract 'eng' language data exists
-        const tessdataPrefix = process.env.TESSDATA_PREFIX || '';
-        const langDataPath = path.join(tessdataPrefix, 'tessdata', 'eng.traineddata');
-        if (!fs.existsSync(langDataPath)) {
-            throw new Error(`Tesseract language data not found at ${langDataPath}. Please install 'eng.traineddata'.`);
-        }
-
-        for (const [i, page] of pages.entries()) {
-            try {
-                const ocrResult = await Tesseract.recognize(page.path, 'eng');
-                result.text.push({
-                    page: i + 1,
-                    text: ocrResult.data.text.trim(),
-                });
-            } catch (err) {
-                console.warn(`OCR failed on page ${i + 1}:`, err.message);
-                result.text.push({
-                    page: i + 1,
-                    text: '[OCR failed]',
-                });
+            // Check that Tesseract 'eng' language data exists
+            const tessdataPrefix = process.env.TESSDATA_PREFIX || '';
+            const langDataPath = path.join(tessdataPrefix, 'tessdata', 'eng.traineddata');
+            if (!fs.existsSync(langDataPath)) {
+                throw new Error(`Tesseract language data not found at ${langDataPath}. Please install 'eng.traineddata'.`);
             }
-        }
 
-        result.success = true;
-
-        fs.unlinkSync(tempFile); 
-        pages.forEach(p => {
-            if (fs.existsSync(p.path)) {
-                fs.unlinkSync(p.path); 
+            for (const [i, page] of pages.entries()) {
+                try {
+                    const ocrResult = await Tesseract.recognize(page.path, 'eng', {
+                        langPath: path.join(process.env.TESSDATA_PREFIX, 'tessdata')
+                    });
+                    result.text.push({
+                        page: i + 1,
+                        text: ocrResult.data.text.trim(),
+                    });
+                } catch (err) {
+                    console.warn(`OCR failed on page ${i + 1}:`, err.message);
+                    result.text.push({
+                        page: i + 1,
+                        text: '[OCR failed]',
+                    });
+                }
             }
-        });
+            result.success = true;
+        } finally {
+            // Cleanup temp files
+            if (fs.existsSync(tempFile)) {
+                fs.unlinkSync(tempFile);
+            }
+            tempImages.forEach(p => {
+                if (fs.existsSync(p.path)) {
+                    fs.unlinkSync(p.path);
+                }
+            });
+        }
     } catch (ocrErr) {
         console.error('OCR failed:', ocrErr.message);
     }
