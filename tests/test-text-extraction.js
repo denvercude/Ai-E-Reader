@@ -10,8 +10,6 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const buffer = fs.readFileSync(path.join(__dirname, '../backend/test-files/test-text-document.pdf'));
-
 
 // Main test runner
 async function testTextExtraction() {
