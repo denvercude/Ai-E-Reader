@@ -14,7 +14,7 @@ const writeTempFile = (buffer, filename) => {
     return filePath;
 };
 
-// main function to extract text from PDF, OCR if necessary
+// main function to extract text from PDF, OCR fallback if necessary
 export async function extractTextFromPdf(buffer) {
     const result = {
         success: false,
@@ -26,6 +26,13 @@ export async function extractTextFromPdf(buffer) {
 
     if (!Buffer.isBuffer(buffer)) {
         throw new Error('extractTextFromPdf expects a Buffer. Got type: ' + typeof buffer);
+    }
+    // limit PDF size to prevent memory issues
+    const maxPDFSize = 50 * 1024 * 1024; // 50MB
+    if (buffer.length > maxPDFSize) {
+        throw new Error(
+            `PDF size (${(buffer.length / 1024 / 1024).toFixed(2)} MB) exceeds maximum allowed size of ${(maxPDFSize / 1024 / 1024).toFixed(2)} MB`
+        );
     }
 
     try {
