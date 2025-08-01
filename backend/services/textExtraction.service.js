@@ -62,7 +62,8 @@ export async function extractTextFromPdf(buffer) {
         const combinedText = pages.map(p => p.text).join(' ').trim();
 
         // If extracted text is sufficiently long, consider extraction successful
-        if (combinedText.length > 20) {
+        const minTextLength = 20; // Minimum length for valid text extraction
+        if (combinedText.length > minTextLength) {
             result.success = true;
             result.text = pages;
             result.totalPages = numPages;
