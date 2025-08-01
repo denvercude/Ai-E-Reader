@@ -98,21 +98,29 @@ export async function extractTextFromPdf(buffer) {
             tempImages.push(...pages);
             result.totalPages = pages.length;
 
-            // Validate existence of Tesseract language data for English ('eng')
-            // This avoids runtime errors if traineddata files are missing
-            const tessdataPrefix = process.env.TESSDATA_PREFIX || '';
-            const langDataPath = path.join(tessdataPrefix, 'tessdata', 'eng.traineddata');
+            // Ensure TESSDATA_PREFIX is set for reliable langPath resolution
+            const tessdataPrefix = process.env.TESSDATA_PREFIX;
+            if (!tessdataPrefix) {
+                throw new Error(
+                    "TESSDATA_PREFIX environment variable is not set. " +
+                    "Please set it in your .env file to the absolute path of your project root."
+                );
+            }
+            const langPath = path.join(tessdataPrefix, 'tessdata');
+            const langDataPath = path.join(langPath, 'eng.traineddata');
             if (!fs.existsSync(langDataPath)) {
-                throw new Error(`Tesseract language data not found at ${langDataPath}. Please install 'eng.traineddata'.`);
+                throw new Error(
+                    `Tesseract language data not found at ${langDataPath}. ` +
+                    "Please install 'eng.traineddata.gz' in tessdata folder."
+                );
             }
 
             // Perform OCR on each image page sequentially
             for (const [i, page] of pages.entries()) {
                 try {
-                    // Recognize text from image using Tesseract
-                    // langPath points to directory containing language data files
+                    // Recognize text from image using Tesseract with robust langPath
                     const ocrResult = await Tesseract.recognize(page.path, 'eng', {
-                        langPath: path.join(process.env.TESSDATA_PREFIX, 'tessdata')
+                        langPath
                     });
                     // Store recognized text along with page number
                     result.text.push({
