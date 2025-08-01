@@ -1,0 +1,22 @@
+.form-container {
+    border: solid black 2px;
+    padding: 2px;
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
+}
+
+.form-wrapper-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
+}
+
+.form-wrapper-container h3 {
+    text-align: center;
+    width: 100%;
+}
+
+input {
+    margin: 2.5px;
+}
