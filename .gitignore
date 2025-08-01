@@ -21,4 +21,5 @@ build/
 frontend/node_modules/
 
 # Tesseract language data
-eng.traineddata
+*.traineddata
+tessdata/*.traineddata

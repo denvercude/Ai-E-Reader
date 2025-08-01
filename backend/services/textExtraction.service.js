@@ -77,6 +77,13 @@ export async function extractTextFromPdf(buffer) {
         const pages = await convert.bulk(-1);
         result.totalPages = pages.length;
 
+        // Check that Tesseract 'eng' language data exists
+        const tessdataPrefix = process.env.TESSDATA_PREFIX || '';
+        const langDataPath = path.join(tessdataPrefix, 'tessdata', 'eng.traineddata');
+        if (!fs.existsSync(langDataPath)) {
+            throw new Error(`Tesseract language data not found at ${langDataPath}. Please install 'eng.traineddata'.`);
+        }
+
         for (const [i, page] of pages.entries()) {
             try {
                 const ocrResult = await Tesseract.recognize(page.path, 'eng');
