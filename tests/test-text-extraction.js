@@ -2,14 +2,13 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { extractTextFromPdf } from '../backend/services/textExtraction.service.js';
 
 dotenv.config();
 
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 const buffer = fs.readFileSync(path.join(__dirname, '../backend/test-files/test-text-document.pdf'));
 
