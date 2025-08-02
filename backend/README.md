@@ -1,8 +1,9 @@
 ## OCR Language Data (Tesseract)
 
 This project requires Tesseract's English language data for OCR.
-1. Download `eng.traineddata` from: [tesseract-ocr/tessdata](https://github.com/tesseract-ocr/tessdata)
-2. Place it in a `tessdata` folder at the root of your project:
-   Ai-E-Reader/tessdata/eng.traineddata
-3. Set the environment variable in your shell or `.env`:
-   export TESSDATA_PREFIX=/Users/werk/projects/Ai-E-Reader
+
+- **You do NOT need to manually download or configure language files.**
+- When you run the service, `tesseract.js` will automatically download `eng.traineddata` to your project root if it does not already exist.
+- To ensure consistent results for all developers and CI, `eng.traineddata` is tracked in the repository using Git LFS.
+
+No additional setup is required. If you remove the file, it will be re-downloaded as needed.
