@@ -14,7 +14,7 @@ async function testBookModel() {
             title: "Sample Book",
             author: "Esai A",
             publicationDate: new Date("2025-08-01"),
-            ISBN: "1234567890123",
+            ISBN: "1234567890124",
             genre: "Technology",
             description: "A sample book for testing purposes.",
             fileUrl: "http://example.com/sample-book.pdf",
@@ -35,8 +35,26 @@ async function testBookModel() {
 
         const savedBook = await sampleBook.save();
         console.log("Book saved:\n", JSON.stringify(savedBook, null, 2));
+
+        // Validate the saved data
+         console.log("✓ Book created successfully");
+         console.log("✓ Text array has", savedBook.text.length, "entries");
+         console.log("✓ AI array has", savedBook.ai.length, "entries");
+         console.log("✓ Total pages:", savedBook.totalPages);
+         console.log("✓ Extraction status:", savedBook.extractionStatus);
+         
+         // Test querying by page
+         const textPage1 = savedBook.text.find(t => t.page === 1);
+         const aiPage1 = savedBook.ai.find(a => a.page === 1);
+         console.log("✓ Can query page 1 text:", !!textPage1);
+         console.log("✓ Can query page 1 AI:", !!aiPage1);
+         
+         // Clean up test data
+         await Book.deleteOne({ _id: savedBook._id });
+         console.log("✓ Test data cleaned up");
+
     } catch (error) {
-        console.error("Error:", err.message);
+        console.error("Error:", error.message);
         }finally {
             // Close the MongoDB connection
             await mongoose.disconnect();

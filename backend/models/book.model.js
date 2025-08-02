@@ -86,6 +86,21 @@ const bookSchema = new mongoose.Schema({
     timestamps: true // automatically adds createdAt and updatedAt fields
 })
 
+bookSchema.pre('save', function (next) {
+    // Check for duplicate pages in text array
+    const textPages = this.text.map(item => item.page);
+    if (textPages.length !== new Set(textPages).size) {
+        return next(new Error('Duplicate pages found in text array'));
+    }
+
+    // Check for duplicate pages in ai array
+    const aiPages = this.ai.map(item => item.page);
+    if (aiPages.length !== new Set(aiPages).size) {
+        return next(new Error('Duplicate pages found in ai array'));
+    }
+    next();
+});
+
 //indexes for performance
 bookSchema.index({ user: 1 }) // for faster user lookups
 bookSchema.index({'text.page': 1}) // for faster text lookups by page
