@@ -5,13 +5,13 @@ import logo from "../assets/LandingPageLogo.png";
 
 function LandingPage(){
     return (
-        <div class="container">
-            <div class="left-container">
+        <div className="container">
+            <div className="left-container">
                 <h1>SidePage</h1>
                 <p>Your intelligent reading companion.</p>
             </div>
-            <div class="right-container">
-                <div class="nav-bar">
+            <div className="right-container">
+                <div className="nav-bar">
                     <a href="#">Home</a>
                     <a href="#">About</a>
                     <a href="#">Sign Up</a>
