@@ -49,10 +49,47 @@ const bookSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    }
+    },
+    
+    // *new This field is for storing the text content of the book, if needed
+    // array of objects, each object contains page number and content
+    text: [
+        {
+            page: { type: Number, required: true },
+            content: { type: String, required: true },
+        },
+    ],
+    ai: [
+        {
+            page: { type: Number, required: true },
+            content: { type: String, required: true },
+        },
+    ],
+    totalPages: {
+        type: Number,
+        default: 0 // default to 0 if not provided
+    },
+    textExtracted: {
+        type: Boolean,
+        default: false // default to false if not provided
+    },
+    extractionStatus: {
+        type: String,
+        enum: ['pending', 'processing', 'completed', 'failed'],
+        default: 'pending' // default to pending if not provided
+    },
+    extractionError: {
+        type: String,
+        default: null // default to null if not provided
+    },
 }, {
     timestamps: true // automatically adds createdAt and updatedAt fields
 })
+
+//indexes for performance
+bookSchema.index({ user: 1 }) // for faster user lookups
+bookSchema.index({'text.page': 1}) // for faster text lookups by page
+bookSchema.index({'ai.page': 1}) // for faster AI lookups by page
 
 const Book = mongoose.model("Book", bookSchema) // Create the Book model using the bookSchema
 export default Book 
