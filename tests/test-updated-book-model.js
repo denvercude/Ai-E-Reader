@@ -48,6 +48,25 @@ async function testBookModel() {
          const aiPage1 = savedBook.ai.find(a => a.page === 1);
          console.log("✓ Can query page 1 text:", !!textPage1);
          console.log("✓ Can query page 1 AI:", !!aiPage1);
+
+         // Test duplicate page validation
+        try {
+             const duplicatePageBook = new Book({
+                title: "Duplicate Test Book",
+                author: "Test Author",
+                ISBN: "9780134685992",
+                fileUrl: "http://example.com/test.pdf",
+                user: new mongoose.Types.ObjectId(),
+                text: [
+                    { page: 1, content: "Content 1" },
+                    { page: 1, content: "Duplicate content" }, // Intentional duplicate
+                ],
+         });
+        await duplicatePageBook.save();
+        console.log("✗ Duplicate validation failed - should not reach here");
+     } catch (duplicateError) {
+        console.log("✓ Duplicate page validation works:", duplicateError.message);
+     }
          
          // Clean up test data
          await Book.deleteOne({ _id: savedBook._id });
