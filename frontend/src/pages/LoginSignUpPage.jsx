@@ -1,10 +1,179 @@
 import { useState } from "react";
 import "../styles/LoginSignUp.css";
+import { signupUser, loginUser } from '../services/api.js';
 
 export default function LoginSignUpPage() {
+    // Animation state variables
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [isAnimating, setIsAnimating] = useState(false);
 
+    // Form submission state variables
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+    })
+    const [errors, setErrors] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    }
+
+    const validateSignupForm = () => {
+        const newErrors = {};
+        
+        // Username validation
+        if (!formData.username.trim()) {
+            newErrors.username = 'Username is required';
+        } else if (formData.username.length < 3) {
+            newErrors.username = 'Username must be at least 3 characters';
+        } else if (formData.username.length > 20) {
+            newErrors.username = 'Username must be less than 20 characters';
+        }
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!emailRegex.test(formData.email)) {
+            newErrors.email = 'Please enter a valid email address';
+        }
+        
+        // Password validation
+        if (!formData.password) {
+            newErrors.password = 'Password is required';
+        } else if (formData.password.length < 6) {
+            newErrors.password = 'Password must be at least 6 characters';
+        }
+        
+        // Confirm password validation
+        if (!formData.confirmPassword) {
+            newErrors.confirmPassword = 'Please confirm your password';
+        } else if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
+        }
+        
+        // Only set errors if validation fails
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return false;
+        }
+        
+        // Clear any existing errors if validation passes
+        setErrors({});
+        return true;
+    };
+    
+    const validateLoginForm = () => {
+        const newErrors = {};
+        
+        // Email validation
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        }
+        
+        // Password validation
+        if (!formData.password) {
+            newErrors.password = 'Password is required';
+        }
+        
+        // Only set errors if validation fails
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return false;
+        }
+        
+        // Clear any existing errors if validation passes
+        setErrors({});
+        return true;
+    };
+
+    const handleSignup = async (e) => {
+        e.preventDefault();
+        
+        // Clear previous messages
+        setMessage('');
+        
+        // Validate form
+        if (!validateSignupForm()) {
+            return;
+        }
+        
+        setIsLoading(true);
+        
+        try {
+            const response = await signupUser({
+                username: formData.username,
+                email: formData.email,
+                password: formData.password
+            });
+            
+            setMessage('Account created successfully! Please log in.');
+            // Clear form data
+            setFormData({
+                username: '',
+                email: '',
+                password: '',
+                confirmPassword: ''
+            });
+            // Switch to login mode
+            setIsLoginMode(true);
+            
+        } catch (error) {
+            setMessage(error.message || 'Signup failed. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        
+        // Clear previous messages
+        setMessage('');
+        
+        // Validate form
+        if (!validateLoginForm()) {
+            return;
+        }
+        
+        setIsLoading(true);
+        
+        try {
+            const response = await loginUser({
+                email: formData.email,
+                password: formData.password
+            });
+            
+            // Store token in localStorage
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            
+            setMessage('Login successful! Redirecting...');
+            
+            // Here you would typically redirect to the main app
+            // For now, just show success message
+            
+        } catch (error) {
+            setMessage(error.message || 'Login failed. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const toggleMode = () => {
         if (isAnimating) return;
@@ -32,11 +201,32 @@ export default function LoginSignUpPage() {
                             <div className="sub-title">Login</div>
                         </div>
                         <div className="card-content">
-                            <div className="login-form">
-                                <input type="email" placeholder="Username or Email" />
-                                <input type="password" placeholder="Password" />
-                                <button className="login-button" type="submit">Login</button>
-                            </div>
+                        <div className="login-form">
+                            <input 
+                                type="email" 
+                                name="email"
+                                placeholder="Username or Email" 
+                                value={formData.email}
+                                onChange={handleInputChange}
+                            />
+                            
+                            <input 
+                                type="password" 
+                                name="password"
+                                placeholder="Password" 
+                                value={formData.password}
+                                onChange={handleInputChange}
+                            />
+                            
+                            <button 
+                                className="login-button" 
+                                type="submit"
+                                onClick={handleLogin}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Logging in...' : 'Login'}
+                            </button>
+                        </div>
                         </div>
                         <div className="card-footer">
                             <span className="footer-text">Need an account?</span>
@@ -52,13 +242,48 @@ export default function LoginSignUpPage() {
                             <div className="sub-title">Sign Up</div>
                         </div>
                         <div className="card-content">
-                            <div className="signup-form">
-                                <input type="text" placeholder="Username" />
-                                <input type="email" placeholder="Email" />
-                                <input type="password" placeholder="Password" />
-                                <input type="password" placeholder="Confirm Password" />
-                                <button className="signup-button" type="submit">Sign Up</button>
-                            </div>
+                        <div className="signup-form">
+                            <input 
+                                type="text" 
+                                name="username"
+                                placeholder="Username" 
+                                value={formData.username}
+                                onChange={handleInputChange}
+                            />
+                            
+                            <input 
+                                type="email" 
+                                name="email"
+                                placeholder="Email" 
+                                value={formData.email}
+                                onChange={handleInputChange}
+                            />
+                            
+                            <input 
+                                type="password" 
+                                name="password"
+                                placeholder="Password" 
+                                value={formData.password}
+                                onChange={handleInputChange}
+                            />
+                            
+                            <input 
+                                type="password" 
+                                name="confirmPassword"
+                                placeholder="Confirm Password" 
+                                value={formData.confirmPassword}
+                                onChange={handleInputChange}
+                            />
+                            
+                            <button 
+                                className="signup-button" 
+                                type="submit"
+                                onClick={handleSignup}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Creating Account...' : 'Sign Up'}
+                            </button>
+                        </div>
                         </div>
                         <div className="card-footer">
                             <span className="footer-text">Already have an account?</span>
@@ -66,7 +291,17 @@ export default function LoginSignUpPage() {
                         </div>
                     </div>
                     <div className="pocket-front">
-                        <div className="title-text">ARCHIVE</div>
+                        <div className="title-text">ARCHIVE-ACCESS</div>
+                        {message && (
+                            <div className={`message ${message.includes('success') ? 'success-message' : 'error-message'}`}>
+                                {message}
+                            </div>
+                        )}
+                        {Object.keys(errors).length > 0 && (
+                            <div className="error-message">
+                                {Object.values(errors)[0]}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -129,6 +129,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
     position: absolute;
     color: #3b2d1f;
     font-weight: bold;
@@ -207,4 +208,14 @@
     padding-right: 10%;
     z-index: 0;
     pointer-events: none;
+}
+
+.error-message {
+    color: #f16b5e;
+    font-size: medium;
+}
+
+.success-message {
+    color: #155724;
+    font-size: medium;
 }
