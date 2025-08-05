@@ -25,7 +25,7 @@ export const signupUser = async (userData) => {
         
         return data;
     } catch (error) {
-        throw error;
+        throw new Error(`Signup request failed: ${error.message}`);
     }
 };
 
@@ -51,6 +51,6 @@ export const loginUser = async (userData) => {
         
         return data;
     } catch (error) {
-        throw error;
+        throw new Error(`Login request failed: ${error.message}`);
     }
 };
