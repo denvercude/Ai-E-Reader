@@ -8,16 +8,17 @@ const ProtectedRoute = ({ children }) => {
         return <Navigate to="/login-signup" replace />;
     }
     
-    // If token exists, render the protected component
     return children;
 };
 
 // Helper function to validate token format/expiration
 const isValidToken = (token) => {
     try {
+        // For JWT tokens, decode and check expiration
         const payload = JSON.parse(atob(token.split('.')[1]));
         return payload.exp > Date.now() / 1000;
     } catch {
+        // If token is not a valid JWT or any other error, consider it invalid
         return false;
     }
 };
