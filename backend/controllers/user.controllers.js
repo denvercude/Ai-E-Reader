@@ -6,21 +6,31 @@ import { User } from '../models/user.model.js';
 export const loginUser = async (req, res) => {
     // this extracts the email and password from the request sent by client
     const { email, password } = req.body;
+
     try {
         // this uses a mongoose method to find the user document associated with the req email
         // if it doesn't find one, the user const will be null
-        const user = await User.findOne({ email });
+        console.log('Email length:', email.length);
+        console.log('Email with quotes:', `"${email}"`);
+        console.log('Email char codes:', email.split('').map(c => c.charCodeAt(0)));
 
+        const user = await User.findOne({ email });
+        
+        console.log('Query used:', { email });
+        console.log('Raw database query result:', user);
+        console.log('User object type:', typeof user);
+        console.log('User is null?', user === null);
+        console.log('User is undefined?', user === undefined);
         // this is where we check if the user const is null and send back appropriate error codes
         if(!user) { 
-            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            return res.status(401).json({ success: false, message: 'Invalid email' });
         }
 
         // now we check if the password matches the stored (hashed) password
         // this calls a helper method matchPassword that we created in user.model.js
         const isMatch = await user.matchPassword(password);
         if(!isMatch) {
-            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            return res.status(401).json({ success: false, message: 'Invalid password' });
         }
 
         // if the method makes it this far, we generate and send back a JWT token
@@ -96,6 +106,13 @@ export const createUser = async (req, res) => {
     try {
         // create() combines 'new User()' and 'user.save()' in one step
         const newUser = await User.create({ username, email, password });
+        console.log('=== USER CREATED ===');
+        console.log('Created user email:', newUser.email);
+        console.log('Created user email type:', typeof newUser.email);
+        console.log('Created user email length:', newUser.email.length);
+        console.log('Created user email with quotes:', `"${newUser.email}"`);
+        console.log('Created user email char codes:', newUser.email.split('').map(c => c.charCodeAt(0)));
+        console.log('=== END USER CREATED ===');
         res.status(201).json({ success: true, data: newUser });
     } catch (error) {
         console.error('Error creating user:', error.message);

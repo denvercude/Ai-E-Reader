@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../styles/LoginSignUp.css";
 import { signupUser, loginUser } from '../services/api.js';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginSignUpPage() {
     // Animation state variables
@@ -17,6 +18,8 @@ export default function LoginSignUpPage() {
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
+
+    const navigate = useNavigate();
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -165,8 +168,7 @@ export default function LoginSignUpPage() {
             
             setMessage('Login successful! Redirecting...');
             
-            // Here you would typically redirect to the main app
-            // For now, just show success message
+            navigate('/library');
             
         } catch (error) {
             setMessage(error.message || 'Login failed. Please try again.');

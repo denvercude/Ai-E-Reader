@@ -213,9 +213,11 @@
 .error-message {
     color: #f16b5e;
     font-size: medium;
+    margin-top: 1rem;
 }
 
 .success-message {
     color: #155724;
     font-size: medium;
+    margin-top: 1rem;
 }
