@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "seed": "node backend/seed.js",
+    "dev:seed": "npm run seed && nodemon backend/server.js",
     "teardown": "node backend/teardown.js",
     "dev": "nodemon backend/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
