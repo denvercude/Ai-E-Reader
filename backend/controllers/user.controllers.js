@@ -6,11 +6,12 @@ import { User } from '../models/user.model.js';
 export const loginUser = async (req, res) => {
     // this extracts the email and password from the request sent by client
     const { email, password } = req.body;
+
     try {
         // this uses a mongoose method to find the user document associated with the req email
         // if it doesn't find one, the user const will be null
         const user = await User.findOne({ email });
-
+        
         // this is where we check if the user const is null and send back appropriate error codes
         if(!user) { 
             return res.status(401).json({ success: false, message: 'Invalid email or password' });
@@ -20,7 +21,7 @@ export const loginUser = async (req, res) => {
         // this calls a helper method matchPassword that we created in user.model.js
         const isMatch = await user.matchPassword(password);
         if(!isMatch) {
-            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            return res.status(401).json({ success: false, message: 'Invalid password or password' });
         }
 
         // if the method makes it this far, we generate and send back a JWT token
@@ -96,6 +97,7 @@ export const createUser = async (req, res) => {
     try {
         // create() combines 'new User()' and 'user.save()' in one step
         const newUser = await User.create({ username, email, password });
+
         res.status(201).json({ success: true, data: newUser });
     } catch (error) {
         console.error('Error creating user:', error.message);

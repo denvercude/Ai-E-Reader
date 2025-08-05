@@ -8,9 +8,6 @@ async function seedDB() {
     try {
         await mongoose.connect(process.env.MONGO_URI);
 
-        // Clear previous data first in case we forgot to tear down in last dev session
-        await User.deleteMany({});
-
         const demoUser = new User({username: "demoUser", email: "test@example.com", password: "hashedpassword"});
         await demoUser.save();
 
