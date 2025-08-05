@@ -3,9 +3,15 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f5f5f5;
-    padding: 20px;
     font-family: 'Courier New', monospace;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-signup-page > h1 {
+    margin-right: 10%;
+    font-size: 4rem;
+    margin-left: -15%;
 }
 
 .card-slot {
@@ -13,6 +19,7 @@
     width: 400px;
     height: 500px;
     perspective: 1000px;
+    z-index: 2;
 }
 
 .card-pocket {
@@ -53,6 +60,26 @@
     letter-spacing: 0.02em;
     margin-top: 4px;
     opacity: 0.9;
+}
+
+.login-card,
+.signup-card {
+    background: #f4e2b8;
+    border: 1px solid #c2a96d;
+    border-radius: 4px;
+    padding: 20px;
+    height: 50%;
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.08);
+    color: #2b2b2b;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center bottom;
+    z-index: 5;
 }
 
 .login-form input,
@@ -165,4 +192,19 @@
 .signup-card.invisible,
 .login-card.invisible {
     opacity: 0;
+}
+
+.background-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: rgba(0, 0, 0, 0.06);
+    font-size: 2.5rem;
+    line-height: 2.9rem;
+    padding-left: 10%;
+    padding-right: 10%;
+    z-index: 0;
+    pointer-events: none;
 }
