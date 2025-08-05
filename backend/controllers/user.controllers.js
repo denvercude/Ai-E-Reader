@@ -10,17 +10,8 @@ export const loginUser = async (req, res) => {
     try {
         // this uses a mongoose method to find the user document associated with the req email
         // if it doesn't find one, the user const will be null
-        console.log('Email length:', email.length);
-        console.log('Email with quotes:', `"${email}"`);
-        console.log('Email char codes:', email.split('').map(c => c.charCodeAt(0)));
-
         const user = await User.findOne({ email });
         
-        console.log('Query used:', { email });
-        console.log('Raw database query result:', user);
-        console.log('User object type:', typeof user);
-        console.log('User is null?', user === null);
-        console.log('User is undefined?', user === undefined);
         // this is where we check if the user const is null and send back appropriate error codes
         if(!user) { 
             return res.status(401).json({ success: false, message: 'Invalid email' });
