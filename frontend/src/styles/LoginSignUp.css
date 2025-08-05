@@ -62,26 +62,6 @@
     opacity: 0.9;
 }
 
-.login-card,
-.signup-card {
-    background: #f4e2b8;
-    border: 1px solid #c2a96d;
-    border-radius: 4px;
-    padding: 20px;
-    height: 50%;
-    box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.08);
-    color: #2b2b2b;
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    transform-origin: center bottom;
-    z-index: 5;
-}
-
 .login-form input,
 .signup-form input {
     background: transparent;
@@ -180,7 +160,7 @@
 .login-card.sliding-out,
 .signup-card.sliding-out {
     transform: translateY(85%) rotateX(-10deg);
-    opacity: 0;
+    opacity: 0
 }
 
 .signup-card.visible,
