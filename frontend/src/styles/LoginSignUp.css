@@ -16,8 +16,8 @@
 
 .card-slot {
     position: relative;
-    width: 400px;
-    height: 500px;
+    width: min(400px, 90vw);
+    height: min(500px, 80vh);
     perspective: 1000px;
     z-index: 2;
 }
@@ -221,4 +221,5 @@
     color: #155724;
     font-size: medium;
     margin-top: 1rem;
+    max-width: 60%;
 }
