@@ -6,7 +6,7 @@ function LandingPage() {
     <div className="landing">
       <div className="overlay-text">SIDE-PAGE</div>
       <nav className="nav-links">
-        <a href="#">home</a> / <a href="#">about</a> / <Link to="/login-signup">login & sign-up</Link>
+      <Link to="/">home</Link> / <Link to="/about">about</Link> / <Link to="/login-signup">login & sign-up</Link>
       </nav>
       <div className="background-text">
         A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole heart. 
