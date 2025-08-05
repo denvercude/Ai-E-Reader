@@ -61,6 +61,8 @@ export default function LoginSignUpPage() {
             newErrors.password = 'Password is required';
         } else if (formData.password.length < 6) {
             newErrors.password = 'Password must be at least 6 characters';
+        } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(formData.password)) {
+           newErrors.password = 'Password must contain at least one letter and one number';
         }
         
         // Confirm password validation
