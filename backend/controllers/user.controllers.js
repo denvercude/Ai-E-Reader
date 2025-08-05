@@ -14,14 +14,14 @@ export const loginUser = async (req, res) => {
         
         // this is where we check if the user const is null and send back appropriate error codes
         if(!user) { 
-            return res.status(401).json({ success: false, message: 'Invalid email' });
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
 
         // now we check if the password matches the stored (hashed) password
         // this calls a helper method matchPassword that we created in user.model.js
         const isMatch = await user.matchPassword(password);
         if(!isMatch) {
-            return res.status(401).json({ success: false, message: 'Invalid password' });
+            return res.status(401).json({ success: false, message: 'Invalid password or password' });
         }
 
         // if the method makes it this far, we generate and send back a JWT token
@@ -97,13 +97,7 @@ export const createUser = async (req, res) => {
     try {
         // create() combines 'new User()' and 'user.save()' in one step
         const newUser = await User.create({ username, email, password });
-        console.log('=== USER CREATED ===');
-        console.log('Created user email:', newUser.email);
-        console.log('Created user email type:', typeof newUser.email);
-        console.log('Created user email length:', newUser.email.length);
-        console.log('Created user email with quotes:', `"${newUser.email}"`);
-        console.log('Created user email char codes:', newUser.email.split('').map(c => c.charCodeAt(0)));
-        console.log('=== END USER CREATED ===');
+
         res.status(201).json({ success: true, data: newUser });
     } catch (error) {
         console.error('Error creating user:', error.message);
