@@ -22,9 +22,9 @@ export default function LoginSignUpPage() {
         <div className="login-signup-page">
             <div className="card-slot">
                 <div className="card-pocket">
-                    <div className={`login-card ${isAnimating ? 'sliding-out' : ''}`}>
+                    <div className={`login-card ${isAnimating ? 'sliding-out' : !isLoginMode ? 'invisible' : ''}`}>
                         <div className="card-header">
-                            <div className="accession-number">Acc no. 001</div>
+                            <div className="accession-number">ACC NO. 001</div>
                             <div className="classification">L001.1</div>
                         </div>
                         <div className="card-title">
