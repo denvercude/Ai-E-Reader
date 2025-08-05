@@ -1,7 +1,9 @@
 .landing {
     position: relative;
-    height: 95vh;
-    width: 95vw;
+    min-height: 95vh;
+    width: 100%;
+    max-width: 95vw;
+    margin: 0 auto;
     background: white;
     font-family: "Courier New", Courier, monospace;
     overflow: hidden;
