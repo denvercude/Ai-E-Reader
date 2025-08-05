@@ -180,7 +180,7 @@
 .login-card.sliding-out,
 .signup-card.sliding-out {
     transform: translateY(85%) rotateX(-10deg);
-    opacity: 0
+    opacity: 0;
 }
 
 .signup-card.visible,
