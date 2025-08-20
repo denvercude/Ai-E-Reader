@@ -36,7 +36,7 @@ async function uploadPdfToS3(buffer) {
   return Key;
 }
 
-// Start Textract async text detection job
+// Start Textract text detection job
 async function startTextractJob(s3Key) {
   const resp = await textract.send(new StartDocumentTextDetectionCommand({
     DocumentLocation: { S3Object: { Bucket: AWS_S3_BUCKET, Name: s3Key } }
@@ -49,6 +49,7 @@ export async function getTextractResult(jobId) {
   let nextToken = undefined;
   const pagesMap = new Map(); // pageNumber -> array of lines
   let jobStatus = 'IN_PROGRESS';
+  let documentPages = 0;
 
   // This loop returns when Textract stops paging results.
   while (true) {
@@ -58,6 +59,9 @@ export async function getTextractResult(jobId) {
     }));
 
     jobStatus = resp.JobStatus;
+    if (resp.DocumentMetadata && typeof resp.DocumentMetadata.Pages === 'number') {
+      documentPages = resp.DocumentMetadata.Pages;
+    }
 
     if (resp.Blocks) {
       for (const b of resp.Blocks) {
@@ -86,7 +90,7 @@ export async function getTextractResult(jobId) {
     requiresOCR: true,
     method: 'OCR (Textract)',
     text: pages,
-    totalPages: pages.length,
+    totalPages: documentPages || pages.length,
     status: jobStatus
   };
 }
@@ -166,7 +170,7 @@ export async function extractTextFromPdf(buffer) {
     // If direct extraction failed or text was too short, proceed to OCR fallback
 
     // Two OCR paths:
-    // 1) If configured for serverless/cloud, use AWS Textract async processing.
+    // 1) If configured for serverless/cloud, use AWS Textract processing.
     // 2) Otherwise, fallback to local Tesseract OCR with pdf2pic conversion.
     try {
         result.requiresOCR = true;
@@ -180,7 +184,7 @@ export async function extractTextFromPdf(buffer) {
                 return {
                     success: false,
                     requiresOCR: true,
-                    method: 'OCR (Textract async)',
+                    method: 'OCR (Textract)',
                     text: [],
                     totalPages: 0,
                     queued: true,
