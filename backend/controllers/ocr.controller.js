@@ -3,12 +3,13 @@ import { extractTextFromPdf, getTextractResult } from '../services/textExtractio
 // Handles the initiation of OCR processing on a PDF file.
 export async function startOcr(req, res) {
   try {
-    // Attempt to get the PDF buffer from either multipart file upload or raw buffer in body.
-    const buffer = req.file?.buffer || req.body?.pdfBuffer;
 
-    // Validate that a buffer exists and is a Buffer object.
+    // only supports multipart upload (field: 'file')
+    const buffer = req.file?.buffer;
     if (!buffer || !Buffer.isBuffer(buffer)) {
-      return res.status(400).json({ error: 'PDF buffer required (multipart file field or raw buffer)' });
+      return res.status(400).json({
+        error: 'No PDF file provided. Upload using multipart/form-data with field "file".'
+      });
     }
 
     // Call the service function to extract text from the PDF buffer.
