@@ -7,6 +7,11 @@ import { extractTextFromPdf } from '../backend/services/textExtraction.service.j
 
 dotenv.config(); // Ensure env variables are available to service
 
+// Force local extraction behavior for unit tests (no Textract async path)
+beforeAll(() => {
+  process.env.OCR_PROVIDER = '';
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
