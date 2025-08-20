@@ -6,7 +6,7 @@ This project uses **AWS Textract** for OCR (Optical Character Recognition).
 
 Add the following to your `.env` file (or set in your deployment platform):
 
-```
+```env
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_REGION=
@@ -20,6 +20,13 @@ Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, yo
 - Textract is used instead of Tesseract because Vercel's serverless environment cannot reliably run heavy OCR workloads.
 - Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:jobId` for results.
 - Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs.
+- In some Node environments, `pdfjs-dist` may require disabling worker fetch (`useWorkerFetch: false`) if worker-related warnings occur.
+- Currently **only multipart/form-data uploads** are supported. Send the file under the field name `file`. Example:
+
+```bash
+curl -s -F "file=@backend/test-files/test-text-document.pdf" \
+  http://localhost:5050/api/ocr/start | jq
+```
 
 ### Setting Up AWS
 
@@ -27,10 +34,10 @@ Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, yo
 
 Textract works on documents in S3.
 
-1.	​	Go to the AWS Management Console -> S3.
+1.	Go to the AWS Management Console -> S3 (Tip: use search bar).
 2.	Click Create bucket.
 3.	Choose a globally unique name, e.g. ai-e-reader-ocr.
-    - Region: stick with something common (e.g. us-east-1). Make sure the bucket region matches your AWS_REGION environment variable.
+    - Region: use a common region (e.g. us-east-1). Make sure the bucket region matches your AWS_REGION environment variable.
     - Block Public Access: leave ON.
     - Default settings are fine otherwise.
 4.	Hit Create bucket.
@@ -46,7 +53,7 @@ We don’t want to use your root account—create a least-privilege user.
 
 Paste this JSON policy (replace YOUR_BUCKET_NAME_HERE):
 
-```
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -81,14 +88,16 @@ Paste this JSON policy (replace YOUR_BUCKET_NAME_HERE):
 
 You’ll need:
 
-	•	AWS_ACCESS_KEY_ID -> from CSV
-	•	AWS_SECRET_ACCESS_KEY -> from CSV
-	•	AWS_REGION -> e.g. us-east-1
-	•	AWS_S3_BUCKET_NAME -> the bucket you created
+```env
+AWS_ACCESS_KEY_ID -> from CSV
+AWS_SECRET_ACCESS_KEY -> from CSV
+AWS_REGION -> e.g. us-east-1
+AWS_S3_BUCKET_NAME -> the bucket you created
+```
 
 #### 4. Enable Textract
 
 Textract requires an active AWS account (not just the free tier). Be sure billing is enabled.
 
-1. Navigate to AWS -> Textract (Tip: Use search bar)
+1. Navigate to AWS -> Textract (Tip: use search bar)
 2. Follow prompts to enable subscription
