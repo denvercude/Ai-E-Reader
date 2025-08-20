@@ -1,10 +1,8 @@
-## OCR Language Data (Tesseract)
+## OCR with AWS Textract
 
-This project requires Tesseract's English language data for OCR.
+This project uses **AWS Textract** for OCR (Optical Character Recognition).
 
-- **You do NOT need to manually download or configure language files.**
-- When you run the service, `tesseract.js` will automatically download `eng.traineddata` to your project root if it does not already exist.
-- To ensure consistent results for all developers and CI, `eng.traineddata` is tracked in the repository using Git LFS.
-- NOTE: Ensure **Git LFS** is installed before cloning; otherwise the `eng.traineddata` file will not be downloaded.
-
-No additional setup is required. If you remove the file, it will be re-downloaded as needed.
+### Notes
+- Textract is used instead of Tesseract because Vercel's serverless environment cannot reliably run heavy OCR workloads.
+- Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:jobId` for results.
+- Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs.
