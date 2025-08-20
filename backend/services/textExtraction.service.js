@@ -31,6 +31,7 @@ async function uploadPdfToS3(buffer) {
     Key,
     Body: buffer,
     ContentType: 'application/pdf',
+    ServerSideEncryption: 'AES256',
   }));
   return Key;
 }
