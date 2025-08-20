@@ -31,10 +31,8 @@ export async function getOcrStatus(req, res) {
     // Validate that the job ID is provided in the query parameters.
     if (!id) return res.status(400).json({ error: 'Missing jobId (?id=...)' });
 
-    // Call the service function to get the OCR result/status for the given job ID.
+    // Ask the service for the current status/result and return it as-is
     const out = await getTextractResult(id);
-
-    // Respond with the job status or extracted text result.
     return res.status(200).json(out);
   } catch (err) {
     // Log the error and return a 500 response with the error message.
