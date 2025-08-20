@@ -1,19 +1,101 @@
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { fromPath } from 'pdf2pic';
 import Tesseract from 'tesseract.js';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { TextractClient, StartDocumentTextDetectionCommand, GetDocumentTextDetectionCommand } from '@aws-sdk/client-textract';
+
+// Keep logs quiet in production
+const isDev = (process.env.NODE_ENV !== 'production');
+
+// AWS clients & config
+const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
+const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET_NAME || process.env.S3_BUCKET || '';
+
+const s3 = new S3Client({ region: AWS_REGION });
+const textract = new TextractClient({ region: AWS_REGION });
+
+// Helper to generate a unique S3 key for uploaded PDFs
+const uniqueS3Key = (prefix = 'uploads/ocr') =>
+  `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`;
+
+// Upload the original PDF buffer to S3 so Textract can process it asynchronously
+async function uploadPdfToS3(buffer) {
+  if (!AWS_S3_BUCKET) throw new Error('Missing AWS_S3_BUCKET_NAME env for Textract OCR.');
+  const Key = uniqueS3Key();
+  await s3.send(new PutObjectCommand({
+    Bucket: AWS_S3_BUCKET,
+    Key,
+    Body: buffer,
+    ContentType: 'application/pdf',
+  }));
+  return Key;
+}
+
+// Start Textract async text detection job
+async function startTextractJob(s3Key) {
+  const resp = await textract.send(new StartDocumentTextDetectionCommand({
+    DocumentLocation: { S3Object: { Bucket: AWS_S3_BUCKET, Name: s3Key } }
+  }));
+  return resp.JobId;
+}
+
+// Poll Textract for results and format into your standard { page, text }[]
+export async function getTextractResult(jobId) {
+  let nextToken = undefined;
+  const pagesMap = new Map(); // pageNumber -> array of lines
+  let jobStatus = 'IN_PROGRESS';
+
+  // This loop returns when Textract stops paging results.
+  while (true) {
+    const resp = await textract.send(new GetDocumentTextDetectionCommand({
+      JobId: jobId,
+      NextToken: nextToken
+    }));
+
+    jobStatus = resp.JobStatus;
+
+    if (resp.Blocks) {
+      for (const b of resp.Blocks) {
+        if (b.BlockType === 'LINE') {
+          const page = b.Page || 1;
+          const arr = pagesMap.get(page) || [];
+          arr.push(b.Text || '');
+          pagesMap.set(page, arr);
+        }
+      }
+    }
+
+    if (!resp.NextToken) break;
+    nextToken = resp.NextToken;
+  }
+
+  if (jobStatus !== 'SUCCEEDED') {
+    return { success: false, requiresOCR: true, method: 'OCR (Textract)', text: [], totalPages: 0, status: jobStatus };
+  }
+
+  const pages = Array.from(pagesMap.keys()).sort((a,b)=>a-b)
+    .map(p => ({ page: p, text: (pagesMap.get(p) || []).join(' ').trim() }));
+
+  return {
+    success: true,
+    requiresOCR: true,
+    method: 'OCR (Textract)',
+    text: pages,
+    totalPages: pages.length,
+    status: jobStatus
+  };
+}
 
 // Utility function to save a PDF buffer to a temporary file
 const writeTempFile = (buffer, filename) => {
-    // Sanitize filename to prevent directory traversal attacks
-    const sanitizedFilename = path.basename(filename);
-    // Use OS temp directory for storing temporary files
-    const tmpDir = os.tmpdir();
-    // Build full path for temp file
-    const filePath = path.join(tmpDir, sanitizedFilename);
-    // Write buffer content to the temp file synchronously
+    // Sanitize filename and prevent traversal; fall back to generated name if invalid
+    const candidate = path.basename(filename);
+    const safeName = /^[a-zA-Z0-9._-]+$/.test(candidate) ? candidate : `tmp-${Date.now()}.pdf`;
+    const filePath = path.join(os.tmpdir(), safeName);
     fs.writeFileSync(filePath, buffer);
     return filePath;
 };
@@ -40,6 +122,10 @@ export async function extractTextFromPdf(buffer) {
             `PDF size (${(buffer.length / 1024 / 1024).toFixed(2)} MB) exceeds maximum allowed size of ${(maxPDFSize / 1024 / 1024).toFixed(2)} MB`
         );
     }
+
+    // Read OCR provider at runtime so .env is available even if this module is imported before dotenv loads
+    const ocrProvider = (process.env.OCR_PROVIDER || '').toLowerCase();
+    if (isDev) console.log('[OCR_PROVIDER]', ocrProvider || '(unset)');
 
     // Attempt direct text extraction using pdfjsLib
     try {
@@ -77,11 +163,40 @@ export async function extractTextFromPdf(buffer) {
     }
 
     // If direct extraction failed or text was too short, proceed to OCR fallback
+
+    // Two OCR paths:
+    // 1) If configured for serverless/cloud, use AWS Textract async processing.
+    // 2) Otherwise, fallback to local Tesseract OCR with pdf2pic conversion.
     try {
         result.requiresOCR = true;
         result.method = 'OCR';
 
-        // Write PDF buffer to a temporary file for conversion to images
+        // If configured for serverless: prefer AWS Textract (async) and return a queued job
+        if (ocrProvider === 'aws-textract') {
+            try {
+                const s3Key = await uploadPdfToS3(buffer);
+                const jobId = await startTextractJob(s3Key);
+                return {
+                    success: false,
+                    requiresOCR: true,
+                    method: 'OCR (Textract async)',
+                    text: [],
+                    totalPages: 0,
+                    queued: true,
+                    jobId,
+                    s3Key
+                };
+            } catch (cloudErr) {
+                if (isDev) console.warn('Textract start failed:', cloudErr.message);
+                // If running in cloud-only mode, do not silently fall back to local OCR
+                if ((process.env.CLOUD_OCR_ONLY || '').toLowerCase() === 'true') {
+                    throw new Error(`Textract failed to start: ${cloudErr.message}`);
+                }
+                // Otherwise, fall through to local OCR for developer convenience
+            }
+        }
+
+        // Local Tesseract OCR fallback with pdf2pic image conversion
         const tempFile = writeTempFile(buffer, `ocr-temp-${Date.now()}.pdf`);
         const tempImages = [];
 
@@ -98,8 +213,9 @@ export async function extractTextFromPdf(buffer) {
             tempImages.push(...pages);
             result.totalPages = pages.length;
 
-            // Tesseract.js will auto-download/manage language data in the project root
-            // No manual path setup is required.
+            // Local dev path: Tesseract.js OCR on page images.
+            // Note: Tesseract will auto-download language data; production
+            // deployments should prefer the Textract path to avoid CPU/timeout limits.
 
             // Perform OCR on each image page sequentially
             for (const [i, page] of pages.entries()) {
