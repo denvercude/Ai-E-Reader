@@ -15,6 +15,12 @@ export async function startOcr(req, res) {
     // Call the service function to extract text from the PDF buffer.
     const out = await extractTextFromPdf(buffer);
 
+    // If job is queued, respond with 202 Accepted and Location header
+    if (out.queued) {
+      res.status(202).location(`/api/ocr/status/${out.jobId}`);
+      return res.json(out);
+    }
+
     // Respond with the extracted text data.
     return res.status(200).json(out);
   } catch (err) {

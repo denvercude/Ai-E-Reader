@@ -189,7 +189,8 @@ export async function extractTextFromPdf(buffer) {
                     totalPages: 0,
                     queued: true,
                     jobId,
-                    s3Key
+                    s3Key,
+                    statusCode: 202 // signal that the job has been accepted
                 };
             } catch (cloudErr) {
                 if (isDev) console.warn('Textract start failed:', cloudErr.message);
