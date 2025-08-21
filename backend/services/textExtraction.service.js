@@ -258,17 +258,11 @@ export async function extractTextFromPdf(buffer) {
             result.method = 'OCR (Local)';
 
         } finally {
-            // Cleanup temporary files to avoid disk space leaks
-            // Remove temp PDF file
-            if (fs.existsSync(tempFile)) {
-                fs.unlinkSync(tempFile);
-            }
-            // Remove all generated temp images
-            tempImages.forEach(p => {
-                if (fs.existsSync(p.path)) {
-                    fs.unlinkSync(p.path);
-                }
-            });
+            // Cleanup temporary files asynchronously to avoid blocking event loop
+            try { await fs.promises.unlink(tempFile); } catch {}
+            await Promise.allSettled(
+              tempImages.map(p => fs.promises.unlink(p.path).catch(() => {}))
+            );
         }
     } catch (ocrErr) {
         // Log any errors encountered during OCR processing
