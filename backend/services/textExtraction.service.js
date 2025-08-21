@@ -174,7 +174,7 @@ export async function extractTextFromPdf(buffer) {
     // 2) Otherwise, fallback to local Tesseract OCR with pdf2pic conversion.
     try {
         result.requiresOCR = true;
-        result.method = 'OCR';
+        result.method = 'OCR (Local)'; // default, overridden if Textract path used
 
         // If configured for serverless: prefer AWS Textract (async) and return a queued job
         if (ocrProvider === 'aws-textract') {
@@ -242,7 +242,10 @@ export async function extractTextFromPdf(buffer) {
                     });
                 }
             }
-            result.success = true; // Mark overall OCR process as successful
+            // Mark overall OCR process as successful and method as (Local)
+            result.success = true;
+            result.method = 'OCR (Local)';
+
         } finally {
             // Cleanup temporary files to avoid disk space leaks
             // Remove temp PDF file

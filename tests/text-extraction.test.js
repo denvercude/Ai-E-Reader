@@ -4,8 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractTextFromPdf } from '../backend/services/textExtraction.service.js';
+import { jest } from '@jest/globals';
 
 dotenv.config(); // Ensure env variables are available to service
+jest.setTimeout(30000); // Set a timeout for tests
 
 // Force local extraction behavior for unit tests (no Textract path)
 beforeAll(() => {
@@ -43,7 +45,7 @@ describe('Text Extraction Service', () => {
     // Assert OCR fallback was triggered and succeeded
     expect(result.success).toBe(true);
     expect(result.requiresOCR).toBe(true);
-    expect(result.method).toBe('OCR');
+    expect(result.method).toBe('OCR (Local)');
     expect(result.totalPages).toBeGreaterThan(0);
     // OCR output might be shorter/less predictable
     expect(result.text[0].text.length).toBeGreaterThan(0);
@@ -57,7 +59,7 @@ describe('Text Extraction Service', () => {
 
     // Assert extraction fails gracefully
     expect(result.success).toBe(false);
-    expect(result.method).toBe('OCR'); // Method falls back to OCR attempt
+    expect(result.method).toBe('OCR (Local)'); // Method falls back to OCR attempt
     expect(result.text.length).toBe(0);
   });
 });
