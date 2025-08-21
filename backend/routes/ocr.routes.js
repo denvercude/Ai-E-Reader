@@ -27,6 +27,16 @@ const upload = multer({
  */
 router.post('/ocr/start', upload.single('file'), startOcr);
 
+/**
+ * GET /ocr/status/:id
+ * Poll status of an OCR job by JobId.
+ * - Path param: `id` (Textract JobId)
+ * - Returns { success, status, text, totalPages, requiresOCR, method }
+ * Example:
+ *   GET /api/ocr/status/abcdef123...
+ */
+router.get('/ocr/status/:id', getOcrStatus);
+
 // Error handler for multer validation errors
 router.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -37,15 +47,5 @@ router.use((err, req, res, next) => {
   }
   next(err);
 });
-
-/**
- * GET /ocr/status/:id
- * Poll status of an OCR job by JobId.
- * - Path param: `id` (Textract JobId)
- * - Returns { success, status, text, totalPages, requiresOCR, method }
- * Example:
- *   GET /api/ocr/status/abcdef123...
- */
-router.get('/ocr/status/:id', getOcrStatus);
 
 export default router;
