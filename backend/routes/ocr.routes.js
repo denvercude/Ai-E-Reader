@@ -11,17 +11,21 @@ const upload = multer({ storage: multer.memoryStorage() });
 /**
  * POST /ocr/start
  * Upload a PDF and trigger OCR.
- * - multipart/form-data, field `file`
+ * - Content-Type: multipart/form-data, field name: `file`
  * - Returns queued job info (Textract) or direct text (local)
+ * Example:
+ *   curl -F "file=@backend/test-files/test-text-document.pdf" http://localhost:5050/api/ocr/start
  */
 router.post('/ocr/start', upload.single('file'), startOcr);
 
 /**
- * GET /ocr/status
+ * GET /ocr/status/:id
  * Poll status of an OCR job by JobId.
- * - id (query param)
- * - Returns { success, status, text, totalPages }
+ * - Path param: `id` (Textract JobId)
+ * - Returns { success, status, text, totalPages, requiresOCR, method }
+ * Example:
+ *   GET /api/ocr/status/abcdef123...
  */
-router.get('/ocr/status', getOcrStatus);
+router.get('/ocr/status/:id', getOcrStatus);
 
 export default router;

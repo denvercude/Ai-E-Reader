@@ -27,10 +27,10 @@ export async function startOcr(req, res) {
 // Handles requests to retrieve the status or result of an OCR job.
 export async function getOcrStatus(req, res) {
   try {
-    const { id } = req.query;
+    const { id } = req.params;
 
-    // Validate that the job ID is provided in the query parameters.
-    if (!id) return res.status(400).json({ error: 'Missing jobId (?id=...)' });
+    // Validate that the job ID is provided in the path parameters.
+    if (!id) return res.status(400).json({ error: 'Missing jobId (/ocr/status/:id)' });
 
     // Ask the service for the current status/result and return it as-is
     const out = await getTextractResult(id);
