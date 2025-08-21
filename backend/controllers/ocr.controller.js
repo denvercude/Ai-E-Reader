@@ -38,6 +38,7 @@ export async function getOcrStatus(req, res) {
 
     // Ask the service for the current status/result and return it as-is
     const out = await getTextractResult(id);
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json(out);
   } catch (err) {
     // Log the error and return a 500 response with the error message.
