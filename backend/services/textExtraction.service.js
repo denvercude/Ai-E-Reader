@@ -214,32 +214,43 @@ export async function extractTextFromPdf(buffer) {
                 savePath: os.tmpdir(), // Save images in OS temp directory
                 format: 'png' // Use PNG format for lossless images
             });
-            // Convert all pages (-1) to images asynchronously
-            const pages = await convert.bulk(-1);
-            tempImages.push(...pages);
-            result.totalPages = pages.length;
+            // Try to determine page count via pdfjs; if available, do page-by-page conversion to reduce peak memory.
+            let pageCount;
+            try {
+                const infoTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+                const pdfInfo = await infoTask.promise;
+                pageCount = pdfInfo.numPages;
+            } catch { /* ignore and fall back to bulk */ }
 
-            // Local dev path: Tesseract.js OCR on page images.
-            // Note: Tesseract will auto-download language data; production
-            // deployments should prefer the Textract path to avoid CPU/timeout limits.
-
-            // Perform OCR on each image page sequentially
-            for (const [i, page] of pages.entries()) {
-                try {
-                    // Recognize text from image using Tesseract
-                    const ocrResult = await Tesseract.recognize(page.path, 'eng');
-                    // Store recognized text along with page number
-                    result.text.push({
-                        page: i + 1,
-                        text: ocrResult.data.text.trim(),
-                    });
-                } catch (err) {
-                    // If OCR fails on a page, log warning and mark page text accordingly
-                    console.warn(`OCR failed on page ${i + 1}:`, err.message);
-                    result.text.push({
-                        page: i + 1,
-                        text: '[OCR failed]',
-                    });
+            if (pageCount && typeof convert.convert === 'function') {
+                // Page-by-page: convert and OCR each page, cleaning up the image immediately
+                result.totalPages = pageCount;
+                for (let p = 1; p <= pageCount; p++) {
+                    try {
+                        const img = await convert.convert(p);
+                        const imgPath = img?.path || img; // pdf2pic returns an object with .path
+                        const ocrResult = await Tesseract.recognize(imgPath, 'eng');
+                        result.text.push({ page: p, text: ocrResult.data.text.trim() });
+                        // Clean up this page image as soon as we’re done
+                        if (imgPath && fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+                    } catch (err) {
+                        console.warn(`OCR failed on page ${p}:`, err.message);
+                        result.text.push({ page: p, text: '[OCR failed]' });
+                    }
+                }
+            } else {
+                // Fallback: bulk convert all pages, then OCR (older pdf2pic or when page count unavailable)
+                const pages = await convert.bulk(-1);
+                tempImages.push(...pages);
+                result.totalPages = pages.length;
+                for (const [i, page] of pages.entries()) {
+                    try {
+                        const ocrResult = await Tesseract.recognize(page.path, 'eng');
+                        result.text.push({ page: i + 1, text: ocrResult.data.text.trim() });
+                    } catch (err) {
+                        console.warn(`OCR failed on page ${i + 1}:`, err.message);
+                        result.text.push({ page: i + 1, text: '[OCR failed]' });
+                    }
                 }
             }
             // Mark overall OCR process as successful and method as (Local)
