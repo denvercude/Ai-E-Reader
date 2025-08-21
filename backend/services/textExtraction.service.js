@@ -127,9 +127,11 @@ export async function extractTextFromPdf(buffer) {
     // Security/validation: limit PDF size to prevent excessive memory usage or DoS
     const maxPDFSize = 50 * 1024 * 1024; // 50MB
     if (buffer.length > maxPDFSize) {
-        throw new Error(
+        const err = new Error(
             `PDF size (${(buffer.length / 1024 / 1024).toFixed(2)} MB) exceeds maximum allowed size of ${(maxPDFSize / 1024 / 1024).toFixed(2)} MB`
         );
+        err.code = 'ERR_PDF_TOO_LARGE';
+        throw err;
     }
 
     // Read OCR provider at runtime so .env is available even if this module is imported before dotenv loads
