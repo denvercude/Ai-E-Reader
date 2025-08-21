@@ -8,7 +8,12 @@ This project uses **AWS Textract** for OCR (Optical Character Recognition) in pr
 
 Textract is used instead of Tesseract because Vercel's serverless environment cannot reliably run heavy OCR workloads. Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
 
-Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs. In some Node environments, `pdfjs-dist` may require disabling worker fetch (`useWorkerFetch: false`) if worker-related warnings occur.
+Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs. In some Node environments, `pdfjs-dist` may require tweaking worker options if worker-related warnings occur. Example:
+
+```js
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = undefined; // let legacy build manage the worker in Node
+```
 
 Currently **only multipart/form-data uploads** are supported. Send the file under the field name `file`. Example:
 
@@ -31,7 +36,11 @@ AWS_S3_BUCKET_NAME=
 OCR_PROVIDER=aws-textract
 ```
 
-Keep `OCR_PROVIDER=aws-textract` for production.
+Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, you may bypass AWS by omitting this or using a different provider (e.g., Tesseract).
+
+Optional flags:
+- `CLOUD_OCR_ONLY=true` — Do not fall back to local OCR if Textract fails to start; return an error instead.
+- Max upload size is 50 MB (requests over this limit are rejected).
 
 #### How To Test Locally
 
@@ -48,22 +57,22 @@ Keep `OCR_PROVIDER=aws-textract` for production.
 
 Textract works on documents in S3.
 
-1.	Go to the AWS Management Console -> S3 (Tip: use search bar).
-2.	Click Create bucket.
-3.	Choose a globally unique name, e.g. ai-e-reader-ocr.
+1.  Go to the AWS Management Console -> S3 (Tip: use search bar).
+2.  Click Create bucket.
+3.  Choose a globally unique name, e.g. ai-e-reader-ocr.
     - Region: use a common region (e.g. us-east-1). Make sure the bucket region matches your AWS_REGION environment variable.
     - Block Public Access: leave ON.
     - Default settings are fine otherwise.
-4.	Hit Create bucket.
+4.  Hit Create bucket.
 
 ##### 2. Create an IAM user for your app
 
 We don’t want to use your root account—create a least-privilege user.
 
-1.	In the AWS Console -> IAM -> Users -> Add user.
-2.	Name: ai-e-reader-service.
-3.	Select: Programmatic access (creates access key + secret).
-4.	Permissions -> Attach policies directly -> click Create policy.
+1.  In the AWS Console -> IAM -> Users -> Add user.
+2.  Name: ai-e-reader-service.
+3.  Select: Programmatic access (creates access key + secret).
+4.  Permissions -> Attach policies directly -> click Create policy.
 
 Paste this JSON policy (replace YOUR_BUCKET_NAME_HERE):
 
@@ -113,8 +122,8 @@ AWS_S3_BUCKET_NAME -> the bucket you created
 
 Textract requires an active AWS account (not just the free tier). Be sure billing is enabled.
 
-1. Navigate to AWS -> Textract (Tip: use search bar)
-2. Follow prompts to enable subscription
+1.  Navigate to AWS -> Textract (Tip: use search bar)
+2.  Follow prompts to enable subscription
 
 ---
 
