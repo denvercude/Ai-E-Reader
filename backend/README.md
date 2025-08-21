@@ -18,7 +18,7 @@ Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, yo
 
 ### Notes
 - Textract is used instead of Tesseract because Vercel's serverless environment cannot reliably run heavy OCR workloads.
-- Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:jobId` for results.
+- Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
 - Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs.
 - In some Node environments, `pdfjs-dist` may require disabling worker fetch (`useWorkerFetch: false`) if worker-related warnings occur.
 - Currently **only multipart/form-data uploads** are supported. Send the file under the field name `file`. Example:
