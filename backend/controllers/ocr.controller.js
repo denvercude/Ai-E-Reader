@@ -24,7 +24,9 @@ export async function startOcr(req, res) {
   } catch (err) {
     // Log the error and return a 500 response with the error message.
     console.error('startOcr error:', err);
-    return res.status(500).json({ error: err.message });
+    const status = err.code === 'ERR_PDF_TOO_LARGE' ? 413 : 500;
+    const message = err.code === 'ERR_PDF_TOO_LARGE' ? 'PDF too large' : 'Unexpected server error';
+    return res.status(status).json({ error: message, code: err.code });
   }
 }
 
@@ -43,6 +45,6 @@ export async function getOcrStatus(req, res) {
   } catch (err) {
     // Log the error and return a 500 response with the error message.
     console.error('getOcrStatus error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Unexpected server error' });
   }
 }
