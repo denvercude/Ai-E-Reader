@@ -51,6 +51,7 @@ export async function getTextractResult(jobId) {
   let jobStatus = 'IN_PROGRESS';
   let documentPages = 0;
 
+  let pageCountGuard = 0;
   // This loop returns when Textract stops paging results.
   while (true) {
     const resp = await textract.send(new GetDocumentTextDetectionCommand({
@@ -76,6 +77,9 @@ export async function getTextractResult(jobId) {
 
     if (!resp.NextToken) break;
     nextToken = resp.NextToken;
+    if (++pageCountGuard > 1000) { // hard cap to avoid pathological loops
+      break;
+    }
   }
 
   if (jobStatus !== 'SUCCEEDED') {
