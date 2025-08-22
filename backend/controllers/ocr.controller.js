@@ -18,6 +18,7 @@ export async function startOcr(req, res) {
     // Respond with the extracted text data or queued job metadata.
     if (out && out.queued && out.jobId) {
       res.set('Location', `/api/ocr/status/${out.jobId}`);
+      res.set('Retry-After', '2'); // hint poll cadence (seconds)
       return res.status(202).json(out);
     }
     return res.status(200).json(out);
@@ -41,7 +42,11 @@ export async function getOcrStatus(req, res) {
     // Ask the service for the current status/result and return it as-is
     const out = await getTextractResult(id);
     res.set('Cache-Control', 'no-store');
-    return res.status(200).json(out);
+    const code = out?.status === 'IN_PROGRESS' ? 202 : 200;
+    if (code === 202) {
+      res.set('Retry-After', '2');
+    }
+    return res.status(code).json(out);
   } catch (err) {
     // Log the error and return a 500 response with the error message.
     console.error('getOcrStatus error:', err);
