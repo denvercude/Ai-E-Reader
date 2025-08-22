@@ -6,8 +6,8 @@ This project supports two OCR providers: **AWS Textract** (default for productio
 
 ### AWS Textract (Default Provider)
 
-This project uses **AWS Textract** for OCR (Optical Character Recognition) in production environments.
-Textract is used instead of Tesseract because Vercel's serverless environment cannot reliably run heavy OCR workloads. 
+This project uses **AWS Textract** for OCR (Optical Character Recognition) in production environments.  
+Textract is preferred over Tesseract because Vercel’s serverless environment cannot reliably handle CPU‑intensive OCR workloads.
 
 Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
 When a Textract job is queued, the server responds with HTTP 202 Accepted and includes:
@@ -66,7 +66,7 @@ Optional flags:
 - Text PDF (direct): `curl -sS -F "file=@backend/test-files/test-text-document.pdf" http://localhost:5050/api/ocr/start | jq`
 
 - Scanned PDF (Textract if OCR_PROVIDER=aws-textract): `curl -sS -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start | jq`
-- Then: `curl -sS http://localhost:5050/api/ocr/status/$jobId | jq` (replace `$jobId` with the value returned by the previous call)
+- Then run: `curl -sS http://localhost:5050/api/ocr/status/$jobId | jq` (replace `$jobId` with the value returned by the previous call).
 
 #### Response Status and Semantics
 
@@ -118,14 +118,14 @@ interface OcrResponse {
 
 Textract works on documents in S3.
 
-1.  Go to the AWS Management Console -> S3 (Tip: use the search bar).
-2.  Click Create bucket.
-3.  Choose a globally unique name, e.g. ai-e-reader-ocr.
-    - Region: use a common region (e.g. us-east-1). Make sure the bucket region matches your AWS_REGION environment variable.
+1.  Go to the AWS Management Console -> S3 (tip: use the search bar).
+2.  Click “Create bucket”.
+3.  Choose a globally unique name, e.g., `ai-e-reader-ocr`.
+    - Region: use a common region (e.g., `us-east-1`). Ensure the bucket region matches your `AWS_REGION` environment variable.
     - Block Public Access: leave ON.
     - Default settings are fine otherwise.
-4.  Hit Create bucket.
-    - (Recommended) Create a lifecycle rule to auto-expire objects under the `uploads/ocr/` prefix after N days to keep storage usage in check.
+4.  Click “Create bucket”.
+    - (Recommended) Create a lifecycle rule to auto-expire objects under the `uploads/ocr/` prefix after N days to control storage usage.
 
 
 ##### 2. Create an IAM user for your app
