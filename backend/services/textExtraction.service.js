@@ -56,7 +56,9 @@ export async function getTextractResult(jobId) {
   while (true) {
     const resp = await textract.send(new GetDocumentTextDetectionCommand({
       JobId: jobId,
-      NextToken: nextToken
+      NextToken: nextToken,
+      // Request up to 1000 blocks per call for efficiency
+      MaxResults: 1000
     }));
 
     jobStatus = resp.JobStatus;
@@ -82,15 +84,14 @@ export async function getTextractResult(jobId) {
     }
   }
 
-  if (jobStatus !== 'SUCCEEDED') {
-    return { success: false, requiresOCR: true, method: 'OCR (Textract)', text: [], totalPages: 0, status: jobStatus };
-  }
-
   const pages = Array.from(pagesMap.keys()).sort((a,b)=>a-b)
     .map(p => ({ page: p, text: (pagesMap.get(p) || []).join(' ').trim() }));
 
+  // PARTIAL_SUCCESS: allow partial results for client use
+  const succeeded = (jobStatus === 'SUCCEEDED' || jobStatus === 'PARTIAL_SUCCESS');
+
   return {
-    success: true,
+    success: succeeded,
     requiresOCR: true,
     method: 'OCR (Textract)',
     text: pages,
