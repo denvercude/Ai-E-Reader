@@ -42,7 +42,7 @@ Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, yo
 
 Optional flags:
 - `CLOUD_OCR_ONLY=true` — Do not fall back to local OCR if Textract fails to start; return an error instead.
-- Max upload size is 50 MB (requests over this limit are rejected).
+- Max upload size is 50 MB (requests over this limit are rejected with HTTP 413).
 
 #### How To Test Locally
 
@@ -67,6 +67,8 @@ Textract works on documents in S3.
     - Block Public Access: leave ON.
     - Default settings are fine otherwise.
 4.  Hit Create bucket.
+    - (Recommended) Create a lifecycle rule to auto-expire objects under the `uploads/ocr/` prefix after N days to keep storage usage in check.
+
 
 ##### 2. Create an IAM user for your app
 
