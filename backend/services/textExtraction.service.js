@@ -212,7 +212,6 @@ export async function extractTextFromPdf(buffer) {
                     queued: true,
                     jobId,
                     s3Key,
-                    statusCode: 202 // signal that the job has been accepted
                 };
             } catch (cloudErr) {
                 if (isDev) console.warn('Textract start failed:', cloudErr.message);
