@@ -53,6 +53,12 @@ Optional flags:
 - Scanned PDF (Textract if OCR_PROVIDER=aws-textract): `curl -sS -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start | jq`
 - Then: `curl -sS http://localhost:5050/api/ocr/status/$jobId | jq` (replace `$jobId` with the value returned by the previous call)
 
+#### Response Status and Semantics
+
+- Textract returns status codes: `IN_PROGRESS`, `SUCCEEDED`, `PARTIAL_SUCCESS`, `FAILED`.
+- `PARTIAL_SUCCESS` may happen if only part of the document could be processed; extracted text is still returned and the service sets `success: true`, but the `status` field will show `PARTIAL_SUCCESS`.
+- Clients should check both `success` and `status` for accurate handling.
+- While jobs are processing (`IN_PROGRESS`), the API responds with `202 Accepted` and includes `Retry-After` to guide polling cadence.
 
 #### Setting Up AWS
 
