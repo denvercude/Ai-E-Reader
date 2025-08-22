@@ -292,7 +292,7 @@ export async function extractTextFromPdf(buffer) {
         }
     } catch (ocrErr) {
         // Log any errors encountered during OCR processing
-        console.error('OCR failed:', ocrErr.message);
+        if (isDev) console.error('OCR failed:', ocrErr.message)
     }
 
     // Return the result object, indicating success or failure and any extracted text
