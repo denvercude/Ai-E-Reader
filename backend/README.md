@@ -2,6 +2,8 @@
 
 This project supports two OCR providers: **AWS Textract** (default for production) and **Local OCR (Tesseract.js)** as a fallback primarily for local development or dedicated server environments.
 
+---
+
 ### AWS Textract (Default Provider)
 
 This project uses **AWS Textract** for OCR (Optical Character Recognition) in production environments.
@@ -44,12 +46,13 @@ Optional flags:
 
 #### How To Test Locally
 
-- Start server: `npm run dev` (listens on http://localhost:5050)
+- Start server: `npm run dev` (listens on <http://localhost:5050>)
 
-- Text PDF (direct): `curl -F "file=@backend/test-files/test-text-document.pdf" http://localhost:5050/api/ocr/start | jq`
+- Text PDF (direct): `curl -sS -F "file=@backend/test-files/test-text-document.pdf" http://localhost:5050/api/ocr/start | jq`
 
-- Scanned PDF (Textract): `curl -s -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start | jq`
-- Then: `curl -s http://localhost:5050/api/ocr/status/<JOB_ID> | jq`
+- Scanned PDF (Textract if OCR_PROVIDER=aws-textract): `curl -sS -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start | jq`
+- Then: `curl -sS http://localhost:5050/api/ocr/status/$jobId | jq` (replace `$jobId` with the value returned by the previous call)
+
 
 #### Setting Up AWS
 
@@ -57,7 +60,7 @@ Optional flags:
 
 Textract works on documents in S3.
 
-1.  Go to the AWS Management Console -> S3 (Tip: use search bar).
+1.  Go to the AWS Management Console -> S3 (Tip: use the search bar).
 2.  Click Create bucket.
 3.  Choose a globally unique name, e.g. ai-e-reader-ocr.
     - Region: use a common region (e.g. us-east-1). Make sure the bucket region matches your AWS_REGION environment variable.
@@ -122,7 +125,7 @@ AWS_S3_BUCKET_NAME -> the bucket you created
 
 Textract requires an active AWS account (not just the free tier). Be sure billing is enabled.
 
-1.  Navigate to AWS -> Textract (Tip: use search bar)
+1.  Navigate to AWS -> Textract (Tip: use the search bar)
 2.  Follow prompts to enable subscription
 
 ---
