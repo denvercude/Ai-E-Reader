@@ -22,7 +22,7 @@ const MAX_PDF_SIZE = 20 * 1024 * 1024;
 const TEXTRACT_MAX_RESULTS = 1000;
 // Textract: hard cap on pagination iterations to avoid pathological loops
 const TEXTRACT_PAGE_GUARD = 1000;
-// pdf2pic: DPI for image conversion; higher improves Local OCR accuracy but costs time/memory
+// pdf2pic: DPI for image conversion in Local OCR; higher improves OCR accuracy but costs time/memory
 const PDF2PIC_DENSITY = 150;
 
 // AWS clients & config
@@ -133,6 +133,8 @@ export async function extractTextFromPdf(buffer) {
         totalPages: 0,
         requiresOCR: false,
         method: '',
+        // Collect warnings (e.g., OCR failures) for client visibility
+        warnings: [],
     };
 
     // Validate input type: must be a Buffer containing PDF binary data
@@ -228,13 +230,15 @@ export async function extractTextFromPdf(buffer) {
 
         try {
             // Convert PDF pages to images using pdf2pic
+            // Unique prefix per job (unique, time+random) to avoid filename collisions
+            const jobPrefix = `ocr-image-${Date.now()}-${Math.random().toString(36).slice(2)}`;
             const convert = fromPath(tempFile, {
                 density: PDF2PIC_DENSITY, // Image resolution for better OCR accuracy
-                saveFilename: 'ocr-image',
-                savePath: os.tmpdir(), // Save images in OS temp directory
-                format: 'png' // Use PNG format for lossless images
+                saveFilename: jobPrefix,   // Unique prefix prevents filename collisions in os.tmpdir()
+                savePath: os.tmpdir(),    // Save images in OS temp directory
+                format: 'png'             // Use PNG format for lossless images
             });
-            // Try to determine page count via pdfjs; if available, do page-by-page conversion to reduce peak memory.
+            // Try to get page count for efficient per-page conversion.
             let pageCount;
             try {
                 const infoTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
@@ -243,7 +247,7 @@ export async function extractTextFromPdf(buffer) {
             } catch { /* ignore and fall back to bulk */ }
 
             if (pageCount && typeof convert.convert === 'function') {
-                // Page-by-page: convert and OCR each page, cleaning up the image immediately
+                // Convert and OCR each page, cleaning up image after use
                 result.totalPages = pageCount;
                 for (let p = 1; p <= pageCount; p++) {
                     try {
@@ -254,12 +258,13 @@ export async function extractTextFromPdf(buffer) {
                         // Clean up this page image as soon as we’re done
                         if (imgPath && fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
                     } catch (err) {
-                        console.warn(`OCR failed on page ${p}:`, err.message);
+                        if (isDev) console.warn(`OCR failed on page ${p}:`, err.message);
+                        result.warnings.push(`OCR failed on page ${p}: ${err.message}`);
                         result.text.push({ page: p, text: '[OCR failed]' });
                     }
                 }
             } else {
-                // Fallback: bulk convert all pages, then OCR (older pdf2pic or when page count unavailable)
+                // Fallback: bulk convert all pages, then OCR each image
                 const pages = await convert.bulk(-1);
                 tempImages.push(...pages);
                 result.totalPages = pages.length;
@@ -268,7 +273,8 @@ export async function extractTextFromPdf(buffer) {
                         const ocrResult = await Tesseract.recognize(page.path, OCR_LANGS);
                         result.text.push({ page: i + 1, text: ocrResult.data.text.trim() });
                     } catch (err) {
-                        console.warn(`OCR failed on page ${i + 1}:`, err.message);
+                        if (isDev) console.warn(`OCR failed on page ${i + 1}:`, err.message);
+                        result.warnings.push(`OCR failed on page ${i + 1}: ${err.message}`);
                         result.text.push({ page: i + 1, text: '[OCR failed]' });
                     }
                 }

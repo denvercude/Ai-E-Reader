@@ -113,6 +113,7 @@ interface OcrResponse {
 - **Partial success:** `status: 'PARTIAL_SUCCESS'` still sets `success: true`; clients should check `status` for messaging.
 - **Errors:** oversized uploads return **413** with `{ errorCode: 'ERR_PDF_TOO_LARGE' }`.
 - **Header precedence:** if `retryAfter` is present in the body, treat it as informational only; the `Retry-After` header is authoritative.
+- **Warnings:** the `warnings[]` field contains non-fatal OCR issues (e.g., per-page OCR failures) so clients don’t have to parse logs.
 
 #### Tunable Parameters
 
