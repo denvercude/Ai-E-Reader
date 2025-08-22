@@ -114,6 +114,26 @@ interface OcrResponse {
 - **Errors:** oversized uploads return **413** with `{ errorCode: 'ERR_PDF_TOO_LARGE' }`.
 - **Header precedence:** if `retryAfter` is present in the body, treat it as informational only; the `Retry-After` header is authoritative.
 
+#### Tunable Parameters
+
+The following constants are defined in `textExtraction.service.js` for easy adjustment. Defaults are chosen to balance accuracy, performance, and resource usage:
+
+- **`MIN_TEXT_LENGTH = 20`**  
+  Minimum number of characters required for direct text extraction to be considered valid. Prevents false positives from empty or near-empty results.
+
+- **`MAX_PDF_SIZE = 50 * 1024 * 1024` (50 MB)**  
+  Maximum PDF size allowed. Requests over this limit are rejected with HTTP 413 to avoid memory/CPU overload.
+
+- **`TEXTRACT_MAX_RESULTS = 1000`**  
+  Maximum number of blocks requested per Textract call. Reduces round‑trips while staying within API constraints.
+
+- **`TEXTRACT_PAGE_GUARD = 1000`**  
+  Safety cap on Textract pagination iterations. Prevents infinite loops if AWS returns unexpected tokens.
+
+- **`PDF2PIC_DENSITY = 150`**  
+  DPI for converting PDFs to images for Local OCR. Higher density improves recognition accuracy but increases memory/CPU usage.
+
+
 ---
 
 ### Local OCR (Tesseract.js)

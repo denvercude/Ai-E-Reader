@@ -13,6 +13,18 @@ const isDev = (process.env.NODE_ENV !== 'production');
 // Languages for Tesseract.js (e.g., "eng", "eng+spa"). Defaults to English.
 const OCR_LANGS = process.env.OCR_LANGS || 'eng';
 
+// === Tunable Parameters ===
+// Threshold for considering direct extraction meaningful
+const MIN_TEXT_LENGTH = 20;
+// Guardrail against oversized PDFs (50 MB)
+const MAX_PDF_SIZE = 50 * 1024 * 1024;
+// Textract: request up to this many blocks per page to reduce API round-trips
+const TEXTRACT_MAX_RESULTS = 1000;
+// Textract: hard cap on pagination iterations to avoid pathological loops
+const TEXTRACT_PAGE_GUARD = 1000;
+// pdf2pic: DPI for image conversion; higher improves Local OCR accuracy but costs time/memory
+const PDF2PIC_DENSITY = 150;
+
 // AWS clients & config
 const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
 const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET_NAME || process.env.S3_BUCKET || '';
@@ -59,8 +71,8 @@ export async function getTextractResult(jobId) {
     const resp = await textract.send(new GetDocumentTextDetectionCommand({
       JobId: jobId,
       NextToken: nextToken,
-      // Request up to 1000 blocks per call for efficiency
-      MaxResults: 1000
+      // Request up to TEXTRACT_MAX_RESULTS blocks per call for efficiency
+      MaxResults: TEXTRACT_MAX_RESULTS
     }));
 
     jobStatus = resp.JobStatus;
@@ -81,7 +93,7 @@ export async function getTextractResult(jobId) {
 
     if (!resp.NextToken) break;
     nextToken = resp.NextToken;
-    if (++pageCountGuard > 1000) { // hard cap to avoid pathological loops
+    if (++pageCountGuard > TEXTRACT_PAGE_GUARD) { // hard cap to avoid pathological loops
       break;
     }
   }
@@ -128,10 +140,9 @@ export async function extractTextFromPdf(buffer) {
         throw new Error('extractTextFromPdf expects a Buffer. Got type: ' + typeof buffer);
     }
     // Security/validation: limit PDF size to prevent excessive memory usage or DoS
-    const maxPDFSize = 50 * 1024 * 1024; // 50MB
-    if (buffer.length > maxPDFSize) {
+    if (buffer.length > MAX_PDF_SIZE) {
         const err = new Error(
-            `PDF size (${(buffer.length / 1024 / 1024).toFixed(2)} MB) exceeds maximum allowed size of ${(maxPDFSize / 1024 / 1024).toFixed(2)} MB`
+            `PDF size (${(buffer.length / 1024 / 1024).toFixed(2)} MB) exceeds maximum allowed size of ${(MAX_PDF_SIZE / 1024 / 1024).toFixed(2)} MB`
         );
         err.code = 'ERR_PDF_TOO_LARGE';
         throw err;
@@ -162,8 +173,8 @@ export async function extractTextFromPdf(buffer) {
         const combinedText = pages.map(p => p.text).join(' ').trim();
 
         // If extracted text is sufficiently long, consider extraction successful
-        const minTextLength = 20; // Minimum length for valid text extraction
-        if (combinedText.length > minTextLength) {
+        const minLen = MIN_TEXT_LENGTH;
+        if (combinedText.length > minLen) {
             result.success = true;
             result.text = pages;
             result.totalPages = numPages;
@@ -218,7 +229,7 @@ export async function extractTextFromPdf(buffer) {
         try {
             // Convert PDF pages to images using pdf2pic
             const convert = fromPath(tempFile, {
-                density: 150, // Image resolution for better OCR accuracy
+                density: PDF2PIC_DENSITY, // Image resolution for better OCR accuracy
                 saveFilename: 'ocr-image',
                 savePath: os.tmpdir(), // Save images in OS temp directory
                 format: 'png' // Use PNG format for lossless images
