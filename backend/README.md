@@ -70,10 +70,47 @@ Optional flags:
 
 #### Response Status and Semantics
 
-- Textract may return one of: `IN_PROGRESS`, `SUCCEEDED`, `PARTIAL_SUCCESS`, `FAILED`.
-- For `PARTIAL_SUCCESS`, the response includes extracted text and `success: true`; the `status` field indicates `PARTIAL_SUCCESS`.
-- Clients should check both `success` and `status` when deciding how to proceed.
-- While jobs are processing (`IN_PROGRESS`), the API responds with `202 Accepted` and includes `Retry-After` to guide polling cadence.
+The OCR API provides clear status updates and response formats to help clients handle job progress and results.
+
+- **Status values:** Textract may return one of the following statuses:
+  - `IN_PROGRESS`
+  - `SUCCEEDED`
+  - `PARTIAL_SUCCESS`
+  - `FAILED`
+- For `PARTIAL_SUCCESS`, the response includes extracted text and sets `success: true`. The `status` field will indicate `PARTIAL_SUCCESS`.
+- Clients should check both the `success` and `status` fields to determine the outcome.
+- While a job is processing (`IN_PROGRESS`), the API responds with **HTTP 202 Accepted** and includes a `Retry-After` header to guide polling intervals.
+
+
+##### Response Format
+
+```ts
+type OcrStatus = 'IN_PROGRESS' | 'SUCCEEDED' | 'PARTIAL_SUCCESS' | 'FAILED';
+type OcrMethod = 'Direct extraction' | 'OCR (Textract)' | 'OCR (Local)';
+
+interface OcrResponse {
+  success: boolean;            // true for SUCCEEDED and PARTIAL_SUCCESS
+  status?: OcrStatus;          // absent for direct-extraction immediate responses
+  method: OcrMethod;           // includes provider detail for OCR
+  requiresOCR: boolean;        // false for direct extraction path
+  totalPages: number;          // number of pages processed
+  text: Array<{ page: number; text: string }>;
+  queued?: boolean;            // true only on initial 202 Accepted from /start
+  jobId?: string;              // present when queued or IN_PROGRESS
+  s3Key?: string;              // present when queued (Textract input location)
+  retryAfter?: number;         // optional echo of Retry-After header (seconds)
+  warnings?: string[];         // non-fatal issues (e.g., "OCR failed on page 3")
+  errorCode?: string;          // e.g., 'ERR_PDF_TOO_LARGE' on immediate failures
+  errorMessage?: string;       // human-readable error summary (generic in prod)
+}
+```
+
+**Notes:**
+- **HTTP semantics:** queued/running responses return **202** with `Location: /api/ocr/status/:id` and `Retry-After: 2`. Completed jobs return **200**.
+- **Partial success:** `status: 'PARTIAL_SUCCESS'` still sets `success: true`; clients should check `status` for messaging.
+- **Errors:** oversized uploads return **413** with `{ errorCode: 'ERR_PDF_TOO_LARGE' }`.
+- **Headers beat body:** if `retryAfter` is present in the body, treat it as a convenience; the `Retry-After` header is authoritative.
+
 
 #### Setting Up AWS
 
