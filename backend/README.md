@@ -7,12 +7,14 @@ This project supports two OCR providers: **AWS Textract** (default for productio
 ### AWS Textract (Default Provider)
 
 This project uses **AWS Textract** for OCR (Optical Character Recognition) in production environments.  
-Textract is preferred over Tesseract because Vercel’s serverless environment cannot reliably handle CPU‑intensive OCR workloads.
+Textract is preferred over Tesseract because Vercel’s serverless environment cannot reliably run CPU‑intensive OCR workloads.
+
 
 Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
 When a Textract job is queued, the server responds with HTTP 202 Accepted and includes:
 - `Location: /api/ocr/status/:id` pointing to the polling endpoint
-- `Retry-After: 2` suggesting a polling cadence (seconds)
+- `Retry-After: 2–5` suggesting a polling cadence (seconds), depending on load
+
 
 Max upload size is 50 MB (requests over this limit are rejected with HTTP 413).
 
@@ -45,15 +47,15 @@ AWS_S3_BUCKET_NAME=
 OCR_PROVIDER=aws-textract
 ```
 
-Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, you may bypass AWS by omitting this or using a different provider (e.g., Tesseract).
+Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, you may bypass AWS by setting `OCR_PROVIDER=local-tesseract`.
 
-OCR_PROVIDER selection:
-- `OCR_PROVIDER=aws-textract` (default if unset in production)
-- `OCR_PROVIDER=local-tesseract` (local/dev, CPU heavy)
+OCR provider selection:
+- `OCR_PROVIDER=aws-textract` — recommended for production.
+- `OCR_PROVIDER=local-tesseract` — for local/dev or dedicated servers (CPU‑heavy).
 
 If OCR_PROVIDER is omitted:
-- In production: defaults to aws-textract (recommended).
-- In local/dev: falls back to local-tesseract if available.
+- In production: treated as `aws-textract` (recommended).
+- In local/dev: treated as `local-tesseract` if the local stack is available.
 
 Optional flags:
 - `CLOUD_OCR_ONLY=true` — Do not fall back to local OCR if Textract fails to start; return an error instead.
@@ -65,7 +67,7 @@ Optional flags:
 
 - Text PDF (direct): `curl -sS -F "file=@backend/test-files/test-text-document.pdf" http://localhost:5050/api/ocr/start | jq`
 
-- Scanned PDF (Textract if OCR_PROVIDER=aws-textract): `curl -sS -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start | jq`
+- Scanned PDF (Textract if OCR_PROVIDER=aws-textract): `curl -sS -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start | jq`.
 - Then run: `curl -sS http://localhost:5050/api/ocr/status/$jobId | jq` (replace `$jobId` with the value returned by the previous call).
 
 #### Response Status and Semantics
@@ -79,7 +81,8 @@ The OCR API provides clear status updates and response formats to help clients h
   - `FAILED`
 - For `PARTIAL_SUCCESS`, the response includes extracted text and sets `success: true`. The `status` field will indicate `PARTIAL_SUCCESS`.
 - Clients should check both the `success` and `status` fields to determine the outcome.
-- While a job is processing (`IN_PROGRESS`), the API responds with **HTTP 202 Accepted** and includes a `Retry-After` header to guide polling intervals.
+- While a job is processing (`IN_PROGRESS`), the API responds with **HTTP 202 Accepted** and includes a `Retry-After` header to guide polling intervals (recommend 2–5 seconds with jitter).
+
 
 
 ##### Response Format
@@ -106,15 +109,53 @@ interface OcrResponse {
 ```
 
 **Notes:**
-- **HTTP semantics:** queued/running responses return **202** with `Location: /api/ocr/status/:id` and `Retry-After: 2`. Completed jobs return **200**.
+- **HTTP semantics:** queued/running responses return **202** with `Location: /api/ocr/status/:id` and a `Retry-After` value (typically 2–5 seconds). Completed jobs return **200**.
 - **Partial success:** `status: 'PARTIAL_SUCCESS'` still sets `success: true`; clients should check `status` for messaging.
 - **Errors:** oversized uploads return **413** with `{ errorCode: 'ERR_PDF_TOO_LARGE' }`.
-- **Headers beat body:** if `retryAfter` is present in the body, treat it as a convenience; the `Retry-After` header is authoritative.
+- **Header precedence:** if `retryAfter` is present in the body, treat it as informational only; the `Retry-After` header is authoritative.
 
+---
 
-#### Setting Up AWS
+### Local OCR (Tesseract.js)
 
-##### 1. Create an S3 bucket
+Local OCR uses **Tesseract.js** as a fallback OCR provider, primarily for local development, bypassing AWS, or use on dedicated servers. This method is **resource intensive** and not recommended for serverless or low-memory environments.
+
+#### How It Works
+
+- Processes PDF pages **one by one** to reduce memory spikes (does not load the entire document at once).
+- Upload files the same way as with Textract: use `multipart/form-data` with the field name `file`.
+
+#### Enabling Local OCR
+
+Set the following environment variable:
+
+```env
+OCR_PROVIDER=local-tesseract
+```
+
+You can also control the OCR language(s) with `OCR_LANGS` (default: `eng`). Example:
+
+```env
+OCR_LANGS=eng+spa
+```
+
+#### Language Data Requirements
+
+- **Offline environments:** Tesseract.js tries to fetch language data on first use. If outbound network access is blocked, pre-provision the required `*.traineddata` files and configure Tesseract.js to use them.
+- This repo tracks `eng.traineddata` with Git LFS. After cloning, run:
+
+  ```bash
+  git lfs install
+  git lfs pull
+  ```
+
+- For additional languages, download the corresponding `*.traineddata` files and point Tesseract.js to their directory in your service configuration.
+
+---
+
+### Setting Up AWS
+
+#### 1. Create an S3 bucket
 
 Textract works on documents in S3.
 
@@ -128,7 +169,7 @@ Textract works on documents in S3.
     - (Recommended) Create a lifecycle rule to auto-expire objects under the `uploads/ocr/` prefix after N days to control storage usage.
 
 
-##### 2. Create an IAM user for your app
+#### 2. Create an IAM user for your app
 
 We don’t want to use your root account—create a least-privilege user.
 
@@ -170,7 +211,7 @@ Paste this JSON policy (replace YOUR_BUCKET_NAME_HERE):
 }
 ```
 
-##### 3. Collect your environment values
+#### 3. Collect your environment values
 
 You’ll need:
 
@@ -181,47 +222,16 @@ AWS_REGION -> e.g. us-east-1
 AWS_S3_BUCKET_NAME -> the bucket you created
 ```
 
-##### 4. Enable Textract
+#### 4. Enable Textract
 
 Textract requires an active AWS account (not just the free tier). Be sure billing is enabled.
 
 1.  Navigate to AWS -> Textract (Tip: use the search bar)
 2.  Follow prompts to enable subscription
 
----
+#### Security and data handling
 
-### Local OCR (Tesseract.js)
-
-Local OCR uses **Tesseract.js** as a fallback OCR provider, primarily for local development, bypassing AWS, or use on dedicated servers. This method is **resource intensive** and not recommended for serverless or low-memory environments.
-
-#### How It Works
-
-- Processes PDF pages **one by one** to reduce memory spikes (does not load the entire document at once).
-- Upload files the same way as with Textract: use `multipart/form-data` with the field name `file`.
-
-#### Enabling Local OCR
-
-Set the following environment variable:
-
-```env
-OCR_PROVIDER=local-tesseract
-```
-
-You can also control the OCR language(s) with `OCR_LANGS` (default: `eng`). Example:
-
-```env
-OCR_LANGS=eng+spa
-```
-
-#### Language Data Requirements
-
-- **Offline environments:** Tesseract.js tries to fetch language data on first use. If outbound network access is blocked, pre-provision the required `*.traineddata` files and configure Tesseract.js to use them.
-- This repo tracks `eng.traineddata` with Git LFS. After cloning, run:
-
-  ```bash
-  git lfs install
-  git lfs pull
-  ```
-
-- For additional languages, download the corresponding `*.traineddata` files and point Tesseract.js to their directory in your service configuration.
-
+- Do not commit `.env` files or credentials. Use environment variables or a secrets manager in production.
+- Enable default encryption on your S3 bucket,
+- Keep lifecycle rules to auto-expire objects under `uploads/ocr/` to reduce data exposure.
+- Be mindful of PII/PHI: only upload what you need, and document retention policies for your org.
