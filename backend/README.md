@@ -60,9 +60,9 @@ Optional flags:
 
 #### Response Status and Semantics
 
-- Textract returns status codes: `IN_PROGRESS`, `SUCCEEDED`, `PARTIAL_SUCCESS`, `FAILED`.
-- `PARTIAL_SUCCESS` may happen if only part of the document could be processed; extracted text is still returned and the service sets `success: true`, but the `status` field will show `PARTIAL_SUCCESS`.
-- Clients should check both `success` and `status` for accurate handling.
+- Textract may return one of: `IN_PROGRESS`, `SUCCEEDED`, `PARTIAL_SUCCESS`, `FAILED`.
+- For `PARTIAL_SUCCESS`, the response includes extracted text and `success: true`; the `status` field indicates `PARTIAL_SUCCESS`.
+- Clients should check both `success` and `status` when deciding how to proceed.
 - While jobs are processing (`IN_PROGRESS`), the API responds with `202 Accepted` and includes `Retry-After` to guide polling cadence.
 
 #### Setting Up AWS
