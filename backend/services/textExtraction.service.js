@@ -38,7 +38,11 @@ const uniqueS3Key = (prefix = 'uploads/ocr') =>
 
 // Upload the original PDF buffer to S3 so Textract can process it asynchronously
 async function uploadPdfToS3(buffer) {
-  if (!AWS_S3_BUCKET) throw new Error('Missing AWS_S3_BUCKET_NAME env for Textract OCR.');
+  if (!AWS_S3_BUCKET) {
+    const err = new Error('Missing AWS_S3_BUCKET_NAME env for Textract OCR.');
+    err.code = 'ERR_CLOUD_OCR_MISCONFIG';
+    throw err;
+  }
   const Key = uniqueS3Key();
   await s3.send(new PutObjectCommand({
     Bucket: AWS_S3_BUCKET,
@@ -217,7 +221,9 @@ export async function extractTextFromPdf(buffer) {
                 if (isDev) console.warn('Textract start failed:', cloudErr.message);
                 // If running in cloud-only mode, do not silently fall back to local OCR
                 if ((process.env.CLOUD_OCR_ONLY || '').toLowerCase() === 'true') {
-                    throw new Error(`Textract failed to start: ${cloudErr.message}`);
+                    const err = new Error(`Textract failed to start: ${cloudErr.message}`);
+                    err.code = 'ERR_CLOUD_OCR_UNAVAILABLE';
+                    throw err;
                 }
                 // Otherwise, fall through to local OCR for developer convenience
             }
