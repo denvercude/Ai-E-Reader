@@ -7,10 +7,15 @@ This project supports two OCR providers: **AWS Textract** (default for productio
 ### AWS Textract (Default Provider)
 
 This project uses **AWS Textract** for OCR (Optical Character Recognition) in production environments.
+Textract is used instead of Tesseract because Vercel's serverless environment cannot reliably run heavy OCR workloads. 
 
-Textract is used instead of Tesseract because Vercel's serverless environment cannot reliably run heavy OCR workloads. Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
+Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
+When a Textract job is queued, the server responds with HTTP 202 Accepted and includes:
+  - `Location: /api/ocr/status/:id` pointing to the polling endpoint
+  - `Retry-After: 2` suggesting a polling cadence (seconds)
 
-Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs. In some Node environments, `pdfjs-dist` may require tweaking worker options if worker-related warnings occur. Example:
+Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs. 
+In some Node environments, `pdfjs-dist` may require tweaking worker options if worker-related warnings occur. Example:
 
 ```js
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
