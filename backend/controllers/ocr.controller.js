@@ -23,10 +23,21 @@ export async function startOcr(req, res) {
     }
     return res.status(200).json(out);
   } catch (err) {
-    // Log the error and return a 500 response with the error message.
     console.error('startOcr error:', err);
-    const status = err.code === 'ERR_PDF_TOO_LARGE' ? 413 : 500;
-    const message = err.code === 'ERR_PDF_TOO_LARGE' ? 'PDF too large' : 'Unexpected server error';
+    // Map specific error codes to appropriate HTTP status codes:
+    // 413 Payload Too Large for PDFs that exceed size limits,
+    // 503 Service Unavailable when the cloud OCR service is down,
+    // 500 Internal Server Error for all other unexpected errors.
+    const status =
+      err.code === 'ERR_PDF_TOO_LARGE' ? 413 :
+      err.code === 'ERR_CLOUD_OCR_UNAVAILABLE' ? 503 :
+      500;
+    // Return generic error messages to avoid leaking internal details to clients.
+    // Error code included in response to allow clients to handle specific cases.
+    const message =
+      err.code === 'ERR_PDF_TOO_LARGE' ? 'PDF too large' :
+      err.code === 'ERR_CLOUD_OCR_UNAVAILABLE' ? 'Cloud OCR unavailable' :
+      'Unexpected server error';
     return res.status(status).json({ error: message, code: err.code });
   }
 }

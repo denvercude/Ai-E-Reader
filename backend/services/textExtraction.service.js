@@ -297,7 +297,11 @@ export async function extractTextFromPdf(buffer) {
         }
     } catch (ocrErr) {
         // Log any errors encountered during OCR processing
-        if (isDev) console.error('OCR failed:', ocrErr.message)
+        if (isDev) console.error('OCR failed:', ocrErr.message);
+        // In cloud-only mode, don't silently fall back/return a partial object
+        if (ocrErr && ocrErr.code === 'ERR_CLOUD_OCR_UNAVAILABLE') {
+            throw ocrErr;
+        }
     }
 
     // Return the result object, indicating success or failure and any extracted text
