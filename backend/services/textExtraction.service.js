@@ -10,6 +10,8 @@ import { TextractClient, StartDocumentTextDetectionCommand, GetDocumentTextDetec
 
 // Keep logs quiet in production
 const isDev = (process.env.NODE_ENV !== 'production');
+// Languages for Tesseract.js (e.g., "eng", "eng+spa"). Defaults to English.
+const OCR_LANGS = process.env.OCR_LANGS || 'eng';
 
 // AWS clients & config
 const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
@@ -236,7 +238,7 @@ export async function extractTextFromPdf(buffer) {
                     try {
                         const img = await convert.convert(p);
                         const imgPath = img?.path || img; // pdf2pic returns an object with .path
-                        const ocrResult = await Tesseract.recognize(imgPath, 'eng');
+                        const ocrResult = await Tesseract.recognize(imgPath, OCR_LANGS);
                         result.text.push({ page: p, text: ocrResult.data.text.trim() });
                         // Clean up this page image as soon as we’re done
                         if (imgPath && fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
@@ -252,7 +254,7 @@ export async function extractTextFromPdf(buffer) {
                 result.totalPages = pages.length;
                 for (const [i, page] of pages.entries()) {
                     try {
-                        const ocrResult = await Tesseract.recognize(page.path, 'eng');
+                        const ocrResult = await Tesseract.recognize(page.path, OCR_LANGS);
                         result.text.push({ page: i + 1, text: ocrResult.data.text.trim() });
                     } catch (err) {
                         console.warn(`OCR failed on page ${i + 1}:`, err.message);

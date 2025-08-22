@@ -140,7 +140,7 @@ Textract requires an active AWS account (not just the free tier). Be sure billin
 
 ### Local OCR (Tesseract.js)
 
-Local OCR uses **Tesseract.js** as a fallback OCR provider, primarily intended for local development or dedicated server use.
+Local OCR uses **Tesseract.js** as a fallback OCR provider, primarily intended for local development, bypassing AWS, or dedicated server use.
 
 This approach is resource heavy and not recommended for serverless or limited-resource environments. To help reduce memory spikes, Local OCR now processes pages one by one instead of loading the entire document at once.
 
@@ -150,6 +150,12 @@ To use Local OCR, set the environment variable:
 OCR_PROVIDER=local-tesseract
 ```
 
-You can still upload files in the same way as with Textract (multipart/form-data with the field name `file`).
+Optional: set `OCR_LANGS` to control languages (default: `eng`). Example:
 
-Local OCR is useful when you want to bypass AWS or do OCR processing entirely on your own infrastructure.
+```env
+OCR_LANGS=eng+spa
+```
+
+Offline environments: ensure the Tesseract language data for the selected languages is available. Tesseract.js will try to fetch data on first use; if outbound network is blocked, pre-provision language data and configure Tesseract to use it.
+
+You can still upload files in the same way as with Textract (multipart/form-data with the field name `file`).
