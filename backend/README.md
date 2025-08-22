@@ -16,7 +16,7 @@ When a Textract job is queued, the server responds with HTTP 202 Accepted and in
 - `Retry-After: 2–5` suggesting a polling cadence (seconds), depending on load
 
 
-Max upload size is 50 MB (requests over this limit are rejected with HTTP 413).
+Max upload size is 20 MB (requests over this limit are rejected with HTTP 413).
 
 Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs. 
 In some Node environments, `pdfjs-dist` may require tweaking worker options if worker-related warnings occur. Example:
@@ -121,7 +121,7 @@ The following constants are defined in `textExtraction.service.js` for easy adju
 - **`MIN_TEXT_LENGTH = 20`**  
   Minimum number of characters required for direct text extraction to be considered valid. Prevents false positives from empty or near-empty results.
 
-- **`MAX_PDF_SIZE = 50 * 1024 * 1024` (50 MB)**  
+- **`MAX_PDF_SIZE = 20 * 1024 * 1024` (20 MB)**  
   Maximum PDF size allowed. Requests over this limit are rejected with HTTP 413 to avoid memory/CPU overload.
 
 - **`TEXTRACT_MAX_RESULTS = 1000`**  

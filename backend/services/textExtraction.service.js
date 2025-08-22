@@ -16,8 +16,8 @@ const OCR_LANGS = process.env.OCR_LANGS || 'eng';
 // === Tunable Parameters ===
 // Threshold for considering direct extraction meaningful
 const MIN_TEXT_LENGTH = 20;
-// Guardrail against oversized PDFs (50 MB)
-const MAX_PDF_SIZE = 50 * 1024 * 1024;
+// Guardrail against oversized PDFs (20 MB)
+const MAX_PDF_SIZE = 20 * 1024 * 1024;
 // Textract: request up to this many blocks per page to reduce API round-trips
 const TEXTRACT_MAX_RESULTS = 1000;
 // Textract: hard cap on pagination iterations to avoid pathological loops
