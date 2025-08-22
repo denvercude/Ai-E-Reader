@@ -11,8 +11,10 @@ Textract is used instead of Tesseract because Vercel's serverless environment ca
 
 Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
 When a Textract job is queued, the server responds with HTTP 202 Accepted and includes:
-  - `Location: /api/ocr/status/:id` pointing to the polling endpoint
-  - `Retry-After: 2` suggesting a polling cadence (seconds)
+- `Location: /api/ocr/status/:id` pointing to the polling endpoint
+- `Retry-After: 2` suggesting a polling cadence (seconds)
+
+Max upload size is 50 MB (requests over this limit are rejected with HTTP 413).
 
 Direct text extraction still uses `pdfjs-dist`; Textract is only used as a fallback for scanned/image-based PDFs. 
 In some Node environments, `pdfjs-dist` may require tweaking worker options if worker-related warnings occur. Example:
@@ -45,9 +47,17 @@ OCR_PROVIDER=aws-textract
 
 Note: Keep `OCR_PROVIDER=aws-textract` for production. For local development, you may bypass AWS by omitting this or using a different provider (e.g., Tesseract).
 
+OCR_PROVIDER selection:
+- `OCR_PROVIDER=aws-textract` (default if unset in production)
+- `OCR_PROVIDER=local-tesseract` (local/dev, CPU heavy)
+
+If OCR_PROVIDER is omitted:
+- In production: defaults to aws-textract (recommended).
+- In local/dev: falls back to local-tesseract if available.
+
 Optional flags:
 - `CLOUD_OCR_ONLY=true` — Do not fall back to local OCR if Textract fails to start; return an error instead.
-- Max upload size is 50 MB (requests over this limit are rejected with HTTP 413).
+- `OCR_LANGS=eng+spa`   — Languages for local Tesseract (default: eng)
 
 #### How To Test Locally
 
@@ -145,22 +155,36 @@ Textract requires an active AWS account (not just the free tier). Be sure billin
 
 ### Local OCR (Tesseract.js)
 
-Local OCR uses **Tesseract.js** as a fallback OCR provider, primarily intended for local development, bypassing AWS, or dedicated server use.
+Local OCR uses **Tesseract.js** as a fallback OCR provider, primarily for local development, bypassing AWS, or use on dedicated servers. This method is **resource intensive** and not recommended for serverless or low-memory environments.
 
-This approach is resource heavy and not recommended for serverless or limited-resource environments. To help reduce memory spikes, Local OCR now processes pages one by one instead of loading the entire document at once.
+#### How It Works
 
-To use Local OCR, set the environment variable:
+- Processes PDF pages **one by one** to reduce memory spikes (does not load the entire document at once).
+- Upload files the same way as with Textract: use `multipart/form-data` with the field name `file`.
+
+#### Enabling Local OCR
+
+Set the following environment variable:
 
 ```env
 OCR_PROVIDER=local-tesseract
 ```
 
-Optional: set `OCR_LANGS` to control languages (default: `eng`). Example:
+You can also control the OCR language(s) with `OCR_LANGS` (default: `eng`). Example:
 
 ```env
 OCR_LANGS=eng+spa
 ```
 
-Offline environments: ensure the Tesseract language data for the selected languages is available. Tesseract.js will try to fetch data on first use; if outbound network is blocked, pre-provision language data and configure Tesseract to use it.
+#### Language Data Requirements
 
-You can still upload files in the same way as with Textract (multipart/form-data with the field name `file`).
+- **Offline environments:** Tesseract.js tries to fetch language data on first use. If outbound network access is blocked, pre-provision the required `*.traineddata` files and configure Tesseract.js to use them.
+- This repo tracks `eng.traineddata` with Git LFS. After cloning, run:
+
+  ```bash
+  git lfs install
+  git lfs pull
+  ```
+
+- For additional languages, download the corresponding `*.traineddata` files and point Tesseract.js to their directory in your service configuration.
+
