@@ -10,7 +10,8 @@ import { TextractClient, StartDocumentTextDetectionCommand, GetDocumentTextDetec
 
 // Keep logs quiet in production
 const isDev = (process.env.NODE_ENV !== 'production');
-// Languages for Tesseract.js (e.g., "eng", "eng+spa"). Defaults to English.
+
+// Language(s) for Tesseract.js (e.g., "eng", "eng+spa"). Defaults to English.
 const OCR_LANGS = process.env.OCR_LANGS || 'eng';
 
 // === Tunable Parameters ===
@@ -154,9 +155,12 @@ export async function extractTextFromPdf(buffer) {
         throw err;
     }
 
-    // Read OCR provider at runtime so .env is available even if this module is imported before dotenv loads
-    const ocrProvider = (process.env.OCR_PROVIDER || '').toLowerCase();
-    if (isDev) console.log('[OCR_PROVIDER]', ocrProvider || '(unset)');
+    // Resolve OCR provider: explicit env wins, otherwise default to environment
+    // - dev default: local-tesseract (no cloud needed for local dev)
+    // - prod default: aws-textract (cloud-based OCR)
+    const envProvider = (process.env.OCR_PROVIDER || '').toLowerCase();
+    const ocrProvider = envProvider || (isDev ? 'local-tesseract' : 'aws-textract');
+    if (isDev) console.log('[OCR_PROVIDER]', ocrProvider);
 
     // Attempt direct text extraction using pdfjsLib
     try {
