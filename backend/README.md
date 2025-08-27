@@ -38,7 +38,7 @@ curl -s -F "file=@backend/test-files/test-text-document.pdf" \
 
 #### Environment Variables
 
-Add the following to your `.env` file (or set in your deployment platform):
+Add the following to your `.env` file (or set in your deployment platformZ):
 
 ```env
 AWS_ACCESS_KEY_ID=
@@ -71,6 +71,28 @@ Optional flags:
 - Scanned PDF (Textract if OCR_PROVIDER=aws-textract): `curl -sS -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start | jq`.
 - Then run: `curl -sS http://localhost:5050/api/ocr/status/$jobId | jq` (replace `$jobId` with the value returned by the previous call).
 
+#### End-to-End Example: Handling 200 vs 202
+
+When calling `/api/ocr/start`, the response may be:
+
+- **200 OK** if direct text extraction succeeds immediately.
+- **202 Accepted** if OCR (Textract) is queued. The response includes a `jobId` and `Location` header for polling.
+
+Example (scanned PDF):
+
+```bash
+# Start OCR job
+resp=$(curl -i -s -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start)
+
+# Extract jobId from JSON body (if 202)
+jobId=$(echo "$resp" | jq -r '.jobId')
+
+# Follow Location header to poll status
+curl -s http://localhost:5050/api/ocr/status/$jobId | jq
+```
+
+Clients should handle both cases to avoid confusion during testing.
+
 #### Response Status and Semantics
 
 The OCR API provides clear status updates and response formats to help clients handle job progress and results.
@@ -102,7 +124,6 @@ interface OcrResponse {
   queued?: boolean;            // true only on initial 202 Accepted from /start
   jobId?: string;              // present when queued or IN_PROGRESS
   s3Key?: string;              // present when queued (Textract input location)
-  retryAfter?: number;         // optional echo of Retry-After header (seconds)
   warnings?: string[];         // non-fatal issues (e.g., "OCR failed on page 3")
   errorCode?: string;          // e.g., 'ERR_PDF_TOO_LARGE' on immediate failures
   errorMessage?: string;       // human-readable error summary (generic in prod)
@@ -113,7 +134,6 @@ interface OcrResponse {
 - **HTTP semantics:** queued/running responses return **202** with `Location: /api/ocr/status/:id` and a `Retry-After` value (typically 2–5 seconds). Completed jobs return **200**.
 - **Partial success:** `status: 'PARTIAL_SUCCESS'` still sets `success: true`; clients should check `status` for messaging.
 - **Errors:** oversized uploads return **413** with `{ errorCode: 'ERR_PDF_TOO_LARGE' }`.
-- **Header precedence:** if `retryAfter` is present in the body, treat it as informational only; the `Retry-After` header is authoritative.
 - **Warnings:** the `warnings[]` field contains non-fatal OCR issues (e.g., per-page OCR failures) so clients don’t have to parse logs.
 
 #### Tunable Parameters

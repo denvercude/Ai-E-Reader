@@ -1,0 +1,11 @@
+HTTP/1.1 404 Not Found
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Security-Policy: default-src 'none'
+X-Content-Type-Options: nosniff
+Content-Type: text/html; charset=utf-8
+Content-Length: 152
+Date: Wed, 27 Aug 2025 23:13:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
