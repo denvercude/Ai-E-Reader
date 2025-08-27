@@ -13,7 +13,7 @@ Textract is preferred over Tesseract because Vercel’s serverless environment c
 Jobs are asynchronous: you upload a PDF with `/api/ocr/start`, then poll `/api/ocr/status/:id` for results.
 When a Textract job is queued, the server responds with HTTP 202 Accepted and includes:
 - `Location: /api/ocr/status/:id` pointing to the polling endpoint
-- `Retry-After: 2–5` suggesting a polling cadence (seconds), depending on load
+- `Retry-After: 2` suggesting a polling cadence (seconds), depending on load
 
 
 Max upload size is 20 MB (requests over this limit are rejected with HTTP 413).
@@ -38,7 +38,7 @@ curl -s -F "file=@backend/test-files/test-text-document.pdf" \
 
 #### Environment Variables
 
-Add the following to your `.env` file (or set in your deployment platformZ):
+Add the following to your `.env` file (or set in your deployment platform):
 
 ```env
 AWS_ACCESS_KEY_ID=
@@ -77,19 +77,6 @@ When calling `/api/ocr/start`, the response may be:
 
 - **200 OK** if direct text extraction succeeds immediately.
 - **202 Accepted** if OCR (Textract) is queued. The response includes a `jobId` and `Location` header for polling.
-
-Example (scanned PDF):
-
-```bash
-# Start OCR job
-resp=$(curl -i -s -F "file=@backend/test-files/test-scanned-document.pdf" http://localhost:5050/api/ocr/start)
-
-# Extract jobId from JSON body (if 202)
-jobId=$(echo "$resp" | jq -r '.jobId')
-
-# Follow Location header to poll status
-curl -s http://localhost:5050/api/ocr/status/$jobId | jq
-```
 
 Clients should handle both cases to avoid confusion during testing.
 
