@@ -259,17 +259,21 @@ export async function extractTextFromPdf(buffer) {
                 // Convert and OCR each page, cleaning up image after use
                 result.totalPages = pageCount;
                 for (let p = 1; p <= pageCount; p++) {
+                    let imgPath;
                     try {
                         const img = await convert.convert(p);
-                        const imgPath = img?.path || img; // pdf2pic returns an object with .path
+                        imgPath = img?.path || img; // pdf2pic may return an object with .path or a string
                         const ocrResult = await Tesseract.recognize(imgPath, OCR_LANGS);
                         result.text.push({ page: p, text: ocrResult.data.text.trim() });
-                        // Clean up this page image as soon as we’re done
-                        if (imgPath && fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
                     } catch (err) {
                         if (isDev) console.warn(`OCR failed on page ${p}:`, err.message);
                         result.warnings.push(`OCR failed on page ${p}: ${err.message}`);
                         result.text.push({ page: p, text: '[OCR failed]' });
+                    } finally {
+                        // Always attempt to remove the per-page image to avoid temp-file accumulation
+                        if (imgPath && fs.existsSync(imgPath)) {
+                            try { fs.unlinkSync(imgPath); } catch {}
+                        }
                     }
                 }
             } else {
