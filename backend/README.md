@@ -23,7 +23,8 @@ In some Node environments, `pdfjs-dist` may require tweaking worker options if w
 
 ```js
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-pdfjsLib.GlobalWorkerOptions.workerSrc = undefined; // let legacy build manage the worker in Node
+// With the legacy Node build, worker configuration is typically not required in Node.
+// If you see worker-related warnings, consult pdfjs-dist docs for Node guidance.
 ```
 
 Currently **only multipart/form-data uploads** are supported. Send the file under the field name `file`. Example:
@@ -180,7 +181,7 @@ OCR_LANGS=eng+spa
 
 Textract works on documents in S3.
 
-1.  Go to the AWS Management Console -> S3 (tip: use the search bar).
+1.  Go to the AWS Management Console → S3 (tip: use the search bar).
 2.  Click “Create bucket”.
 3.  Choose a globally unique name, e.g., `ai-e-reader-ocr`.
     - Region: use a common region (e.g., `us-east-1`). Ensure the bucket region matches your `AWS_REGION` environment variable.
@@ -194,10 +195,10 @@ Textract works on documents in S3.
 
 We don’t want to use your root account—create a least-privilege user.
 
-1.  In the AWS Console -> IAM -> Users -> Add user.
+1.  In the AWS Console → IAM → Users → Add user.
 2.  Name: ai-e-reader-service.
 3.  Select: Programmatic access (creates access key + secret).
-4.  Permissions -> Attach policies directly -> click Create policy.
+4.  Permissions → Attach policies directly → click Create policy.
 
 Paste this JSON policy (replace YOUR_BUCKET_NAME_HERE):
 
@@ -237,22 +238,22 @@ Paste this JSON policy (replace YOUR_BUCKET_NAME_HERE):
 You’ll need:
 
 ```env
-AWS_ACCESS_KEY_ID -> from CSV
-AWS_SECRET_ACCESS_KEY -> from CSV
-AWS_REGION -> e.g. us-east-1
-AWS_S3_BUCKET_NAME -> the bucket you created
+AWS_ACCESS_KEY_ID → from CSV
+AWS_SECRET_ACCESS_KEY → from CSV
+AWS_REGION → e.g. us-east-1
+AWS_S3_BUCKET_NAME → the bucket you created
 ```
 
 #### 4. Enable Textract
 
 Textract requires an active AWS account (not just the free tier). Be sure billing is enabled.
 
-1.  Navigate to AWS -> Textract (Tip: use the search bar)
+1.  Navigate to AWS → Textract (Tip: use the search bar)
 2.  Follow prompts to enable subscription
 
 #### Security and data handling
 
 - Do not commit `.env` files or credentials. Use environment variables or a secrets manager in production.
-- Enable default encryption on your S3 bucket,
+- Enable default encryption on your S3 bucket.
 - Keep lifecycle rules to auto-expire objects under `uploads/ocr/` to reduce data exposure.
 - Be mindful of PII/PHI: only upload what you need, and document retention policies for your org.
